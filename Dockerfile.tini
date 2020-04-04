@@ -1,0 +1,50 @@
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+
+ENV METALS_VERSION 0.1.0
+
+LABEL io.k8s.description="metals: a drop-in mTLS solution" \
+  io.k8s.display-name="metals-example v${METALS_VERSION} tini" \
+  io.openshift.tags="tls,mtls,tini" \
+  name="metals" \
+  architecture="x86_64" \
+  maintainer="github.com/FreedomBen"
+
+# Install dependencies
+RUN microdnf update -y \
+ && microdnf install -y \
+    nginx \
+    wget \
+    procps \
+ && microdnf clean all -y \
+ && wget -O /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 \
+ && chmod +x /usr/local/bin/jq
+
+# We need to be able to write the nginx config file
+RUN chmod g+rwx /etc/nginx/conf.d
+
+# Install tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc /tini.asc
+RUN gpg \
+  --batch \
+  --keyserver hkp://p80.pool.sks-keyservers.net:80 \
+  --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
+ && gpg --batch --verify /tini.asc /tini \
+ && chmod 0555 /tini
+
+# In OpenShift our user ID will be random and not root,
+RUN mkdir -p /mtls/default-certificates /var/run/ssl \
+ && chgrp -R 0 /mtls /var/run/ssl \
+ && chmod -R g+rwX /mtls /var/run/ssl \
+ && chmod g+rwX /var /var/{log,run}
+
+WORKDIR /mtls
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY default-certificates/* /mtls/default-certificates/
+COPY start.sh /mtls
+
+EXPOSE 8443
+
+ENTRYPOINT ["/tini", "--"]
+CMD [ "/mtls/start.sh" ]
