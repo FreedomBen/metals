@@ -2,6 +2,10 @@
 
 MeTaLS uses a [containerized](https://opensource.com/resources/what-are-linux-containers) instance of [nginx](https://www.nginx.com/) to easily add [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) services to any backend service.  All you have to do is provide some configuration information to the container (done through environment variables), and it will configure itself dynamically at runtime.
 
+**Pre-built images are available here**:
+
+* Quay:  [quay.io/freedomben/metals:latest](https://quay.io/repository/freedomben/metals)
+* Docker hub:  [docker.io/freedomben/metals:latest](https://hub.docker.com/repository/docker/freedomben/metals)
 
 ## Quick Links
 
@@ -11,6 +15,7 @@ MeTaLS uses a [containerized](https://opensource.com/resources/what-are-linux-co
     * [Pre-requisites](#pre-requisites)
     * [Configuring your app](#configuring-your-app)
     * [Configuring MeTaLS](#configuring-metals)
+    * [Pre-built Images](#pre-built-images)
     * [Deploying Together](#putting-your-app-and-metals-together-like-chocolate-and-peanut-butter)
 * [Variable reference](#required-variables)
 * [Frequently Asked Questions (FAQs)](#faqs)
@@ -20,7 +25,7 @@ MeTaLS uses a [containerized](https://opensource.com/resources/what-are-linux-co
 At a high level, to add mTLS to your [OpenShift](https://www.openshift.com/) or [Kubernetes](https://kubernetes.io/) application with this project, assuming you already have a working [Deployment](https://docs.openshift.com/container-platform/4.1/applications/deployments/what-deployments-are.html) or [DeploymentConfig](https://docs.openshift.com/container-platform/4.1/applications/deployments/what-deployments-are.html#deployments-and-deploymentconfigs_what-deployments-are), you will:
 
 1. Obtain TLS cert and key for your service, and the trust chain for clients who should be allowed in
-1. Add a container to your Deployment's containers array so that this image gets run inside your application Pods
+1. Add a container to your Deployment's containers array so that the official MeTaLS image gets run inside your application Pods
 1. Configure the required environment variables to pass in your certificates
 1. Profit!
 
@@ -220,6 +225,24 @@ If you need to allow certain paths through without client authentication, you ca
 | `METALS_HEALTH_CHECK_LISTEN_PORT`            | No       | `9443`             | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
 
 You may notice that `METALS_SKIP_CLIENT_AUTH_PATH` and `METALS_HEALTH_CHECK_PATH` do the same thing.  Good observation!  This is by design to allow you to choose the one with more semantic meaning for you.  I tried to choose self-documenting variable names that would describe their function.  If you are skipping client authentication for health check reasons, you may wish to choose the `METALS_HEALTH_CHECK_PATH` version as it's more self-documenting.  Ultimately however, the choice is up to you.
+
+### Pre-Built Images
+
+There are pre-built images available on quay.io and Docker Hub.  The default images use [dumb-init](https://github.com/Yelp/dumb-init) as PID 1, but if you prefer [tini](https://github.com/krallin/tini) there is an image available built on tini.  The only difference between the dumb-init and tini images are the PID 1.
+
+For more information on PID 1 and containers, The [OpenShift Image Guidelines](https://docs.openshift.com/enterprise/3.0/creating_images/guidelines.html) are helpful.  There is a good blog post [Docker and the PID 1 zombie reaping problem](http://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/), as well as [Demystifying the init system (PID 1)](https://felipec.wordpress.com/2013/11/04/init/).
+
+#### [dumb-init](https://github.com/Yelp/dumb-init) based images:
+
+* Quay:  [quay.io/freedomben/metals:latest](https://quay.io/repository/freedomben/metals)
+* Quay:  [quay.io/freedomben/metals-dumb-init:latest](https://quay.io/repository/freedomben/metals-dumb-init) (Identical to above, just explicitly contains "dumb-init" in the image name)
+* Docker hub:  [docker.io/freedomben/metals:latest](https://hub.docker.com/repository/docker/freedomben/metals)
+* Docker hub:  [docker.io/freedomben/metals-dumb-init:latest](https://hub.docker.com/repository/docker/freedomben/metals-dumb-init) (Identical to above, just explicitly contains "dumb-init" in the image name)
+
+#### [tini](https://github.com/krallin/tini) based images:
+
+* Quay:  [quay.io/freedomben/metals-tini:latest](https://quay.io/repository/freedomben/metals-tini)
+* Docker hub:  [docker.io/freedomben/metals-tini:latest](https://hub.docker.com/repository/docker/freedomben/metals-tini)
 
 ### Putting your app and MeTaLS together (like chocolate and peanut butter)
 
@@ -520,3 +543,7 @@ Classic software development story.  This project started out small, and Bash wa
 ### 6.  Why the name MeTaLS?
 
 The name MeTaLS is dual purpose.  It's what I hear when pronouncing the acronym MTLS, and it's also a hat tip to one of my favorite fiction book series of all time, [Mistborn](https://en.wikipedia.org/wiki/Mistborn).
+
+### 7.  Which pre-built images are available?
+
+Section moved to documentation above.  See [Pre-Built Images](#pre-built-images)
