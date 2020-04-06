@@ -1,6 +1,6 @@
 # MeTaLS (mTLS)
 
-MeTaLS uses a [containerized](https://opensource.com/resources/what-are-linux-containers) instance of [nginx](https://www.nginx.com/) to easily add [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) services to any backend service.  All you have to do is provide some configuration information to the container (done through environment variables), and it will configure itself dynamically at runtime.
+MeTaLS uses a [containerized](https://opensource.com/resources/what-are-linux-containers) instance of [nginx](https://www.nginx.com/) to easily add [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) services to any backend service.  All you have to do is provide some configuration information to the container (done through environment variables), and it will configure itself dynamically at runtime.  Full example project that implements MeTaLS available for reference [here](https://github.com/FreedomBen/metals-example).
 
 **Pre-built images are available here**:
 
