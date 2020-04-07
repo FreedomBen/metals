@@ -457,7 +457,7 @@ nginx_server_block ()
         listen       ${6:-"8443"} default_server;
         listen       [::]:${6:-"8443"} default_server;
         server_name  ${METALS_SERVER_NAME:-"_"};
-        #root         /opt/app-root/src;
+        root         /usr/share/nginx/html;
         ssl                     ${METALS_SSL:-"on"};
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");
@@ -496,7 +496,7 @@ generate_nginx_config_no_health_checks ()
         listen       ${METALS_LISTEN_PORT:-"8443"} default_server;
         listen       [::]:${METALS_LISTEN_PORT:-"8443"} default_server;
         server_name  ${METALS_SERVER_NAME:-"_"};
-        root         /opt/app-root/src;
+        root         /usr/share/nginx/html;
         ssl                     ${METALS_SSL:-"on"};
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");

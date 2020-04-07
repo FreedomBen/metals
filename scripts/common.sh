@@ -181,10 +181,10 @@ start_metals_vault ()
     \
     --env METALS_VAULT_PATH="secret/data/metals/service" \
     \
-    --env METALS_PUBLIC_CERT_VAULT_KEY="server_crt" \
-    --env METALS_PRIVATE_KEY_VAULT_KEY="server_key" \
-    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="rootca_crt" \
-    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="rootca_crt" \
+    --env METALS_PUBLIC_CERT_VAULT_KEY="data.server_crt" \
+    --env METALS_PRIVATE_KEY_VAULT_KEY="data.server_key" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="data.rootca_crt" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="data.rootca_crt" \
     \
     --env METALS_HEALTH_CHECK_PATH=/health \
     \
@@ -229,10 +229,10 @@ start_metals_vault_diff_paths ()
     --env METALS_SERVER_TRUST_CHAIN_VAULT_PATH="secret/data/metals/rootca" \
     --env METALS_CLIENT_TRUST_CHAIN_VAULT_PATH="secret/data/metals/rootca" \
     \
-    --env METALS_PUBLIC_CERT_VAULT_KEY="crt" \
-    --env METALS_PRIVATE_KEY_VAULT_KEY="key" \
-    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="crt" \
-    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="crt" \
+    --env METALS_PUBLIC_CERT_VAULT_KEY="data.crt" \
+    --env METALS_PRIVATE_KEY_VAULT_KEY="data.key" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="data.crt" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="data.crt" \
     \
     --env METALS_HEALTH_CHECK_PATH=/health \
     \

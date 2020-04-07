@@ -23,7 +23,7 @@ main ()
   start_metals_example
 
   #start_metals
-  start_metals_vault bash
+  start_metals_vault
   #start_metals_vault_diff_paths
 }
 

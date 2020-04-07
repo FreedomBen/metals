@@ -16,6 +16,7 @@ main ()
   stop_metals_example
   stop_vault
   remove_pod
+  true # mask errors
 }
 
 main "$@"
