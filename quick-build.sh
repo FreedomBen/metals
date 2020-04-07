@@ -31,22 +31,6 @@ main ()
     -f Dockerfile.nginx-116 \
     .
 
-  $PODMAN build \
-    -t quay.io/freedomben/metals-nginx-114:latest \
-    -t quay.io/freedomben/metals-nginx-114:1.0 \
-    -t docker.io/freedomben/metals-nginx-114:latest \
-    -t docker.io/freedomben/metals-nginx-114:1.0 \
-    -f Dockerfile.nginx-114 \
-    .
-
-  $PODMAN build \
-    -t quay.io/freedomben/metals-nginx-117:latest \
-    -t quay.io/freedomben/metals-nginx-117:1.0 \
-    -t docker.io/freedomben/metals-nginx-117:latest \
-    -t docker.io/freedomben/metals-nginx-117:1.0 \
-    -f Dockerfile.nginx-117 \
-    .
-
   $PODMAN tag \
     quay.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:latest \
     quay.io/freedomben/metals:latest
@@ -54,15 +38,6 @@ main ()
   $PODMAN tag \
     docker.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:latest \
     docker.io/freedomben/metals:latest
-
-
-#  $PODMAN build \
-#    -t quay.io/freedomben/metals-tini:latest \
-#    -t quay.io/freedomben/metals-tini:1.0 \
-#    -t docker.io/freedomben/metals-tini:latest \
-#    -t docker.io/freedomben/metals-tini:1.0 \
-#    -f Dockerfile.tini \
-#    .
 }
 
 main "$@"

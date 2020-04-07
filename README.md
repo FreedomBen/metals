@@ -598,3 +598,9 @@ The name MeTaLS is dual purpose.  It's what I hear when pronouncing the acronym 
 ### 7.  Which pre-built images are available?
 
 Section moved to documentation above.  See [Pre-Built Images](#pre-built-images)
+
+### 8.  Which version of nginx does this use?
+
+You can take your pick.  The default version currently is 1.16 as that is the latest stable version.  Version 1.14 is also available and has received a lot of testing.  1.17 is being worked on.
+
+If you prefer to use a [Red Hat based image (UBI)](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) then go with 1.14.  1.16 is a Fedora based image.  1.17 is based on [the official debian-based nginx image available on Docker Hub](https://hub.docker.com/_/nginx).

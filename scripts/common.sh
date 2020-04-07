@@ -7,8 +7,8 @@ export PODMAN=
 PODMAN="sudo $(command -v podman)"
 
 export VAULT_IMAGE='docker.io/vault:1.3.2'
-export METALS_IMAGE='docker.io/freedomben/metals:latest'
-export METALS_EXAMPLE_IMAGE="docker.io/freedomben/metals-example" # Expected to exist locally (you can use build.sh in the root dir to build this)
+export METALS_IMAGE='docker.io/freedomben/metals-nginx-116:latest'
+export METALS_EXAMPLE_IMAGE="docker.io/freedomben/metals-example"
 
 export METALS_CONTAINER='metals'
 export METALS_EXAMPLE_CONTAINER='metals-example'

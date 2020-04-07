@@ -31,21 +31,6 @@ main ()
   $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-116:1.0
   $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-116:latest
   $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-116:1.0
-
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-114:latest
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-114:1.0
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-114:latest
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-114:1.0
-
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-117:latest
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-117:1.0
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-117:latest
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-117:1.0
-
-  #$PODMAN push quay.io/freedomben/metals-tini:latest
-  #$PODMAN push quay.io/freedomben/metals-tini:1.0
-  #$PODMAN push docker.io/freedomben/metals-tini:latest
-  #$PODMAN push docker.io/freedomben/metals-tini:1.0
 }
 
 main "$@"
