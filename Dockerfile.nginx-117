@@ -1,0 +1,43 @@
+FROM docker.io/nginx:1.17
+
+ENV NGINX_VERSION 1.17
+ENV METALS_VERSION 0.1.0
+
+LABEL io.k8s.description="metals: a drop-in mTLS solution" \
+  io.k8s.display-name="metals-example v${METALS_VERSION} dumb-init" \
+  io.openshift.tags="tls,mtls,dumb-init" \
+  name="metals" \
+  architecture="x86_64" \
+  maintainer="github.com/FreedomBen"
+
+# Install dependencies
+RUN apt-get update -y \
+ && apt-get install -y \
+    curl \
+    wget \
+    procps \
+    jq \
+ && apt-get clean all -y \
+
+# We need to be able to write the nginx config file
+RUN chmod g+rwx /etc/nginx/conf.d
+
+# Install dumb-init
+RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 \
+ && chmod +x /usr/local/bin/dumb-init
+
+# In OpenShift our user ID will be random and not root,
+RUN mkdir -p /mtls/default-certificates /var/run/ssl \
+ && chgrp -R 0 /mtls /var/run/ssl \
+ && chmod -R g+rwX /mtls /var/run/ssl \
+ && chmod g+rwX /var /var/log /var/run
+
+WORKDIR /mtls
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY default-certificates/* /mtls/default-certificates/
+COPY start.sh /mtls
+
+EXPOSE 8443
+
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
+CMD [ "/mtls/start.sh" ]
