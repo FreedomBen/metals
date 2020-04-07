@@ -403,15 +403,15 @@ items:
       app: metals-example
     name: metals-example-settings
   data:
-    MTLS_SSL_CERTIFICATE: |
+    METALS_SSL_CERTIFICATE: |
       -----BEGIN CERTIFICATE-----
       ...
       -----END CERTIFICATE-----
-    MTLS_SSL_CLIENT_CERTIFICATE: &rootca |
+    METALS_SSL_CLIENT_CERTIFICATE: &rootca |
       -----BEGIN CERTIFICATE-----
       ...
       -----END CERTIFICATE-----
-    MTLS_SSL_TRUSTED_CERTIFICATE: *rootca
+    METALS_SSL_TRUSTED_CERTIFICATE: *rootca
 - apiVersion: v1
   kind: Secret
   metadata:
@@ -420,7 +420,7 @@ items:
     name: metals-example-private-key
   type: Opaque
   stringData:
-    MTLS_SSL_CERTIFICATE_KEY: |
+    METALS_SSL_CERTIFICATE_KEY: |
       -----BEGIN RSA PRIVATE KEY-----
       ...
       -----END RSA PRIVATE KEY-----
@@ -557,8 +557,8 @@ items:
       app: metals-example
     name: metals-example-settings
   data:
-    MTLS_HEALTH_CHECK_PATH: "/health"  # This will bypass client auth in MeTaLS for /health
-    MTLS_SSL_CERTIFICATE: |
+    METALS_HEALTH_CHECK_PATH: "/health"  # This will bypass client auth in MeTaLS for /health
+    METALS_SSL_CERTIFICATE: |
       ...
 ```
 

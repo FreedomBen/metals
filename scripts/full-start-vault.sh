@@ -16,12 +16,15 @@ main ()
   create_pod
   start_vault
 
-  sleep 5
+  sleep 3
   write_keys_to_vault_same_path
   write_keys_to_vault_different_path
 
   start_metals_example
-  start_metals
+
+  #start_metals
+  start_metals_vault bash
+  #start_metals_vault_diff_paths
 }
 
 main "$@"

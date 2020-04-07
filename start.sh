@@ -83,20 +83,81 @@ fail_if_first_present_but_not_second ()
   fi
 }
 
+first_or_second_present ()
+{
+  env | grep "$2" >/dev/null 2>&1 || env | grep "$3" >/dev/null 2>&1
+}
+
+fail_if_first_present_but_not_second_or_third ()
+{
+  debug "Checking that if env var '${1}' is present, so is '${2}' or '${3}'"
+  if $(env | grep "$1" >/dev/null 2>&1) && ! $(first_or_second_present "$2" "$3"); then
+    die "'$1' is present but '$2' or '$3' is not.  See README.md for more details"
+  fi
+}
+
+check_required_vault_env_vars ()
+{
+  # If the private key isn't provided already, make sure we
+  # have a vault addr and path to retrieve one with
+  if [ -z "${METALS_PRIVATE_KEY}" ]; then
+    info "Private key is not in METALS_PRIVATE_KEY. Requiring VAULT_ADDR and either VAULT_TOKEN or VAULT_ROLE"
+
+    fail_if_env_var_missing "VAULT_ADDR"
+
+    fail_if_all_env_vars_missing \
+      "VAULT_TOKEN" \
+      "VAULT_ROLE"
+  else
+    debug "Private key is in METALS_PRIVATE_KEY. Using that"
+  fi
+}
+
 check_required_env_vars ()
 {
   debug "Checking that required env vars are present"
 
-  fail_if_env_var_missing "METALS_PRIVATE_KEY"
-  fail_if_env_var_missing "METALS_PUBLIC_CERT"
-  fail_if_env_var_missing "METALS_SERVER_TRUST_CHAIN"
-  fail_if_env_var_missing "METALS_CLIENT_TRUST_CHAIN"
+  check_required_vault_env_vars
+
+  fail_if_all_env_vars_missing \
+    "METALS_PRIVATE_KEY" \
+    "METALS_PRIVATE_KEY_VAULT_KEY"
+  fail_if_all_env_vars_missing \
+    "METALS_PUBLIC_CERT" \
+    "METALS_PUBLIC_CERT_VAULT_KEY"
+  fail_if_all_env_vars_missing \
+    "METALS_SERVER_TRUST_CHAIN" \
+    "METALS_SERVER_TRUST_CHAIN_VAULT_KEY"
+  fail_if_all_env_vars_missing \
+    "METALS_CLIENT_TRUST_CHAIN" \
+    "METALS_CLIENT_TRUST_CHAIN_VAULT_KEY"
+
+  fail_if_first_present_but_not_second \
+    "VAULT_ROLE" \
+    "VAULT_KUBERNETES_AUTH_PATH"
+
+  fail_if_first_present_but_not_second_or_third \
+    "METALS_PRIVATE_KEY_VAULT_KEY" \
+    "METALS_PRIVATE_KEY_VAULT_PATH" \
+    "METALS_VAULT_PATH"
+  fail_if_first_present_but_not_second_or_third \
+    "METALS_PUBLIC_CERT_VAULT_KEY" \
+    "METALS_PUBLIC_CERT_VAULT_PATH" \
+    "METALS_VAULT_PATH"
+  fail_if_first_present_but_not_second_or_third \
+    "METALS_SERVER_TRUST_CHAIN_VAULT_KEY" \
+    "METALS_SERVER_TRUST_CHAIN_VAULT_PATH" \
+    "METALS_VAULT_PATH"
+  fail_if_first_present_but_not_second_or_third \
+    "METALS_CLIENT_TRUST_CHAIN_VAULT_KEY" \
+    "METALS_CLIENT_TRUST_CHAIN_VAULT_PATH" \
+    "METALS_VAULT_PATH"
 }
 
 warn_or_die_on_ssl ()
 {
   # If SSL is disabled then we can proceed without valid certs,
-  # Meaning we do not need to exit.  IF SSL is enabled then we
+  # Meaning we do not need to exit.  If SSL is enabled then we
   # need to fail rather than risk starting with a bad key/cert
   if [ "${METALS_SSL}" = "off" ]; then
     warn "$1"
@@ -105,28 +166,178 @@ warn_or_die_on_ssl ()
   fi
 }
 
-write_ssl_certificate_key ()
+curl_vault_secret ()
 {
-  debug 'Using SSL certificate key literal from env var'
-  printf '%s\n' "$METALS_PRIVATE_KEY" > "$1"
+  # shellcheck disable=SC2086
+  curl \
+    -H "Content-Type: application/json" \
+    -H "X-Vault-Token: ${VAULT_TOKEN}" \
+    -H "X-Vault-Request: true" \
+    -H "X-Vault-Namespace: ${VAULT_NAMESPACE}" \
+    -X GET \
+    "$(vault_full_endpoint $1)"
+}
+
+vault_full_endpoint ()
+{
+  echo "$(sanitized_vault_addr)/v1/$(sanitized_vault_path "${1}")"
+}
+
+retrieve_vault_secret ()
+{
+  info "Retrieving secret from vault path '${1}' (Associated key '${2}')"
+  local curl_result
+
+  # Temporarily turn off -e so we can handle a curl error
+  # on our own (otherwise bash will exit)
+  set +e
+  # shellcheck disable=2086
+  curl_result="$(curl_vault_secret ${1})"
+  curl_retval="$?"
+  set -e
+
+  # If this is a public cert, and debug is enabled, print out
+  # the whole curl_result to make troubleshooting easier
+  # Use a whitelist approach to avoid any accidental leakage of secrets
+  debug_unsafe "\$curl_result from vault path '${1}' key '${2}' is: '${curl_result}'"
+
+  if [ "$curl_retval" = "0" ]; then
+    # shellcheck disable=SC2155
+    local err_msg_supp="Error retrieving secret for vault path '${1}' (Associated key '${2}').  Full Vault URL: '$(vault_full_endpoint "$1")'.  Result: '${curl_result}'"
+    if $(echo "$curl_result" | grep 'permission.denied' >/dev/null 2>&1); then
+      warn_or_die_on_ssl "Permission denied by Vault.  Check your Vault token.  ${err_msg_supp}"
+    elif $(echo "$curl_result" | grep '\{\s*"errors"\s*:\s*\[\s*\]\s*\}' >/dev/null 2>&1); then
+      warn_or_die_on_ssl "Vault returned an empty error array from the API.  This probably means the Vault Path '${1}' does not exist.  ${err_msg_supp}"
+    elif $(echo "$curl_result" | grep '^."errors"' >/dev/null 2>&1); then
+      warn_or_die_on_ssl "Vault returned errors from the API.  ${err_msg_supp}"
+    else
+      info "Retrieved secret from vault path '${1}'. Have not yet parsed it for key '${2}'.  Full Vault URL: '$(vault_full_endpoint "$1")'"
+    fi
+  else
+    warn_or_die_on_ssl "Error retrieving secret for vault path '${1}' (Associated key '${2}').  Full Vault URL: '$(vault_full_endpoint "$1")'.  Result: '${curl_result}'"
+  fi
+
+  # If jq is installed, use that for parsing Vault's response. Otherwise use ruby
+  if command -v jq >/dev/null 2>&1; then
+    parse_and_write_vault_json_response_jq "$1" "$2" "$3" "${curl_result}"
+  elif command -v ruby >/dev/null 2>&1; then
+    parse_and_write_vault_json_response_ruby "$1" "$2" "$3" "${curl_result}"
+  else
+    warn_or_die_on_ssl "Neither jq nore ruby is installed. One of them is required to parse the JSON response from Vault.  Please add it to the image and try again"
+  fi
+}
+
+parse_and_write_vault_json_response_jq ()
+{
+  # $1=path $2=key $3=filename $4=curl_result
+  # Write curl result to file specified in $3
+  if echo "${4}" | jq -r ".data.${2}" > "$3"; then
+    info "Successfully parsed json key '${2}' from secret from vault path '${1}' (using jq)"
+  else
+    warn_or_die_on_ssl "Error parsing json key '${2}' from secret for vault path '${1}' (using jq)"
+  fi
+}
+
+parse_and_write_vault_json_response_ruby ()
+{
+  # $1=path $2=key $3=filename $4=curl_result
+  if echo "${4}" \
+     | ruby -r json -e "puts JSON.parse(STDIN.read)['data']['$2']" \
+     > "$3"
+  then
+    info "Successfully parsed json key '${2}' from secret from vault path '${1}' (using ruby)"
+  else
+    warn_or_die_on_ssl "Error parsing json key '${2}' from secret for vault path '${1}' (using ruby)"
+  fi
+}
+
+sanitized_vault_path ()
+{
+  echo "${1}" \
+    | sed -e 's|^/||g' \
+    | sed -e 's|/$||g' \
+    | sed -e 's|//|/|g'
+}
+
+first_or_second ()
+{
+  if [ -n "$1" ]; then
+    echo "$1"
+  else
+    echo "$2"
+  fi
 }
 
 write_ssl_certificate ()
 {
-  debug 'Using SSL certificate literal from env var'
-  printf '%s\n' "$METALS_PUBLIC_CERT" > "$1"
+  if [ -n "$METALS_PUBLIC_CERT" ]; then
+    debug 'Using SSL certificate literal from env var'
+    printf '%s\n' "$METALS_PUBLIC_CERT" > "$1"
+  else
+    debug 'Retrieving SSL certificate from Vault'
+
+    local path
+    path="$(first_or_second \
+      "$METALS_PUBLIC_CERT_VAULT_PATH" \
+      "$METALS_VAULT_PATH" \
+    )"
+    local key=$METALS_PUBLIC_CERT_VAULT_KEY
+    retrieve_vault_secret "${path}" "${key}" "$1"
+  fi
 }
 
-write_ssl_trusted_certificate ()
+write_ssl_certificate_key ()
 {
-  debug 'Using SSL trusted certificate literal from env var'
-  printf '%s\n' "$METALS_SERVER_TRUST_CHAIN" > "$1"
+  if [ -n "$METALS_PRIVATE_KEY" ]; then
+    debug 'Using SSL certificate key literal from env var'
+    printf '%s\n' "$METALS_PRIVATE_KEY" > "$1"
+  else
+    debug 'Retrieving SSL certificate key from Vault'
+
+    local path
+    path="$(first_or_second \
+      "$METALS_PRIVATE_KEY_VAULT_PATH" \
+      "$METALS_VAULT_PATH" \
+    )"
+    local key=$METALS_PRIVATE_KEY_VAULT_KEY
+    retrieve_vault_secret "${path}" "${key}" "$1"
+  fi
 }
 
 write_ssl_client_certificate ()
 {
-  debug 'Using SSL client certificate literal from env var'
-  printf '%s\n' "$METALS_CLIENT_TRUST_CHAIN" > "$1"
+  if [ -n "$METALS_CLIENT_TRUST_CHAIN" ]; then
+    debug 'Using SSL client certificate literal from env var'
+    printf '%s\n' "$METALS_CLIENT_TRUST_CHAIN" > "$1"
+  else
+    debug 'Retrieving SSL client certificate from Vault'
+
+    local path
+    path="$(first_or_second \
+      "$METALS_CLIENT_TRUST_CHAIN_VAULT_PATH" \
+      "$METALS_VAULT_PATH" \
+    )"
+    local key=$METALS_CLIENT_TRUST_CHAIN_VAULT_KEY
+    retrieve_vault_secret "${path}" "${key}" "$1"
+  fi
+}
+
+write_ssl_trusted_certificate ()
+{
+  if [ -n "$METALS_SERVER_TRUST_CHAIN" ]; then
+    debug 'Using SSL trusted certificate literal from env var'
+    printf '%s\n' "$METALS_SERVER_TRUST_CHAIN" > "$1"
+  else
+    debug 'Retrieving SSL trusted certificate from Vault'
+
+    local path
+    path="$(first_or_second \
+      "$METALS_SERVER_TRUST_CHAIN_VAULT_PATH" \
+      "$METALS_VAULT_PATH" \
+    )"
+    local key=$METALS_SERVER_TRUST_CHAIN_VAULT_KEY
+    retrieve_vault_secret "${path}" "${key}" "$1"
+  fi
 }
 
 file_not_empty ()
@@ -144,7 +355,7 @@ file_has_multiple_lines ()
 {
   local MIN_NUM_LINES=3
 
-  debug "Verifying that file '$1' has at least $MIN_NUM_LINES lines"
+  debug "Checking that file '$1' has at least $MIN_NUM_LINES lines"
 
   local num_lines
   if [ -n "$1" ] && [ -f "$1" ]; then
@@ -165,7 +376,7 @@ file_has_multiple_lines ()
 
 file_header_is_pem ()
 {
-  debug "Verifying that file '$1' header is valid PEM"
+  debug "Checking that file '$1' header is valid PEM"
 
   if [ -n "$1" ] && [ -f "$1" ] && head -1 "$1" | grep '^-----BEGIN' >/dev/null 2>&1; then
     debug "File '$1' has $(wc -l "$1") lines, which is more than the minimum of '$MIN_NUM_LINES'"
@@ -178,7 +389,7 @@ file_header_is_pem ()
 
 file_is_pem ()
 {
-  debug "Verifying that file '$1' is a valid PEM file"
+  debug "Checking that file '$1' is a valid PEM file"
   if [ -n "$1" ] && [ -f "$1" ] && file_has_multiple_lines "$1" && file_header_is_pem "$1"; then
     info "File '$1' appears to be valid PEM'"
     return 0
@@ -188,12 +399,20 @@ file_is_pem ()
   fi
 }
 
+file_not_null ()
+{
+  debug "Checking that file '${1}' is not null"
+  if grep '^null' "${1}"; then
+    warn_or_die_on_ssl "File '${1}' was null, but should not be.  The JSON key was not found in the JSON blob, and is likely incorrect"
+  fi
+}
+
 valid_pem_file ()
 {
   # Prefer $1 if it exists and has a valid certificate or key
   # $2 is the file to fall back to if $1 fails validation
-  debug "Verifying that file '$1' is valid"
-  if file_not_empty "$1" && file_is_pem "$1"; then
+  debug "Checking that file '$1' is valid"
+  if file_not_empty "$1" && file_not_null "$1" && file_is_pem "$1"; then
     info "File '$1' appears to be valid'"
     echo "$1"
   else
@@ -353,7 +572,7 @@ check_not_null ()
 {
   debug "Checking that file '${1}' is not null"
   if grep '^null' "${1}"; then
-    warn_or_die_on_ssl "File '${1}' was null, but should not be"
+    warn_or_die_on_ssl "File '${1}' was null, but should not be.  The JSON key is likely incorrect"
   fi
 }
 
@@ -407,12 +626,160 @@ check_proxy_pass_host ()
   fi
 }
 
+fail_if_not_valid_vault_path ()
+{
+  if ! [ "$1" = "" ] && ! [[ $1 =~ [A-Za-z0-9/]+ ]]; then
+    die "'$1' is not a valid vault path"
+  fi
+}
+
+check_valid_vault_paths ()
+{
+  fail_if_not_valid_vault_path "$METALS_PRIVATE_KEY_VAULT_PATH"
+  fail_if_not_valid_vault_path "$METALS_PUBLIC_CERT_VAULT_PATH"
+  fail_if_not_valid_vault_path "$METALS_SERVER_TRUST_CHAIN_VAULT_PATH"
+  fail_if_not_valid_vault_path "$METALS_CLIENT_TRUST_CHAIN_VAULT_PATH"
+}
+
+check_valid_vault_url ()
+{
+  if [ -n "$VAULT_ADDR" ] && ! [[ $VAULT_ADDR =~ https?://[A-Za-z0-9/]+ ]]; then
+    die "VAULT_ADDR value doesn't look valid. Failed regex check"
+  fi
+}
+
+check_valid_serviceaccount_token ()
+{
+  if [ -z "$METALS_PRIVATE_KEY" ] && [ -z "$VAULT_TOKEN" ] && ! [ -f "$KUBERNETES_SERVICE_ACCOUNT_TOKEN_FILE" ]; then
+    warn_or_die_on_ssl "METALS_PRIVATE_KEY is empty, and VAULT_TOKEN is not set, but the Kubernetes service account token is missing.  Expected it to be in the file '${KUBERNETES_SERVICE_ACCOUNT_TOKEN_FILE}'"
+  fi
+}
+
+check_valid_vault_kubernetes_auth_path ()
+{
+  # If there's no private key litera, and no VAULT_TOKEN, then we need a valid root path
+  if [ -z "$METALS_PRIVATE_KEY" ] && [ -z "$VAULT_TOKEN" ] && ! [[ $VAULT_KUBERNETES_AUTH_PATH =~ [A-Za-z0-9/]+/login$ ]]; then
+    die "VAULT_TOKEN is empty, and VAULT_KUBERNETES_AUTH_PATH doesn't look valid. Failed regex check.  It should end with '/login'"
+  fi
+}
+
+sanitized_vault_addr ()
+{
+  # shellcheck disable=SC2001
+  echo "$VAULT_ADDR" \
+    | sed -e 's|/$||g'
+}
+
+sanitized_vault_kube_auth_path ()
+{
+  echo "$VAULT_KUBERNETES_AUTH_PATH" \
+    | sed -e 's|^/||g' \
+    | sed -e 's|/$||g' \
+    | sed -e 's|//|/|g' \
+    | sed -e 's|^v1/||g'
+}
+
+vault_kube_auth_full_endpoint ()
+{
+  echo "$(sanitized_vault_addr)/v1/$(sanitized_vault_kube_auth_path)"
+}
+
+curl_kube_auth ()
+{
+  JWT="$(cat "$KUBERNETES_SERVICE_ACCOUNT_TOKEN_FILE")"
+  curl \
+    --request POST \
+    --data "{\"role\":\"${VAULT_ROLE}\",\"jwt\":\"${JWT}\"}" \
+    "$(vault_kube_auth_full_endpoint)"
+}
+
+parse_and_save_vault_client_token_json_response_jq ()
+{
+  # Parse client token and store in VAULT_TOKEN
+  if echo "${1}" | jq -r '.auth.client_token' >/dev/null 2>&1; then
+    # shellcheck disable=SC2155
+    export VAULT_TOKEN="$(echo "${1}" | jq -r '.auth.client_token')"
+    info 'Successfully parsed client token from Vault login using jq'
+  else
+    warn_or_die_on_ssl "Error parsing client_token from Vault response using jq.  JSON response: '${1}'"
+  fi
+}
+
+parse_and_save_vault_client_token_json_response_ruby ()
+{
+  # Parse client token and store in VAULT_TOKEN
+  if echo "${1}" \
+     | ruby -r json -e "puts JSON.parse(STDIN.read)['auth']['client_token']" >/dev/null 2>&1
+  then
+    # shellcheck disable=SC2155
+    export VAULT_TOKEN="$(echo "${1}" \
+      | ruby -r json -e "puts JSON.parse(STDIN.read)['auth']['client_token']")"
+    info 'Successfully parsed client token from Vault login using ruby'
+  else
+    warn_or_die_on_ssl "Error parsing client_token from Vault response using ruby.  JSON response: '${1}'"
+  fi
+}
+
+retrieve_vault_token ()
+{
+  # If VAULT_TOKEN is empty, populate it
+  debug 'Checking if VAULT_TOKEN is empty, meaning we need to retrieve it from Vault using the serviceaccount token'
+  if [ -n "$VAULT_TOKEN" ]; then
+    info "VAULT_TOKEN is already set.  Will use that instead of retrieving client token from Vault kube auth"
+  else
+    info "VAULT_TOKEN not set.  Retrieving client token from vault using kubernetes service account"
+    local curl_result
+
+    # Temporarily turn off -e so we can handle a curl error
+    # on our own (otherwise bash will exit)
+    set +e
+    # shellcheck disable=2086
+    curl_result="$(curl_kube_auth)"
+    curl_retval="$?"
+    set -e
+
+    if [ "$curl_retval" = "0" ]; then
+      if $(echo "$curl_result" | grep '^."errors"' >/dev/null 2>&1); then
+        warn_or_die_on_ssl "Vault returned errors from the API.  Error retrieving client token with serviceaccount.  Full Vault URL: '$(vault_kube_auth_full_endpoint)'.  Result: '${curl_result}'"
+      else
+        info "Retrieved client token secret from vault.  Full Vault URL: '$(vault_kube_auth_full_endpoint)'"
+      fi
+    else
+      warn_or_die_on_ssl "Error retrieving client token using serviceaccount for vault.  Full Vault URL: '$(vault_kube_auth_full_endpoint)'.  Result: '${curl_result}'"
+    fi
+
+    # If jq is installed, use that for parsing Vault's response. Otherwise use ruby
+    if command -v jq >/dev/null 2>&1; then
+      parse_and_save_vault_client_token_json_response_jq "${curl_result}"
+    elif command -v ruby >/dev/null 2>&1; then
+      parse_and_save_vault_client_token_json_response_ruby "${curl_result}"
+    else
+      warn_or_die_on_ssl "Neither jq nore ruby is installed. One of them is required to parse the JSON response from Vault.  Please add it to the image and try again"
+    fi
+
+    if [ -z "$VAULT_TOKEN" ]; then
+      warn_or_die_on_ssl 'VAULT_TOKEN is still empty string after receiving and parsing'
+    fi
+  fi
+}
+
 main ()
 {
   check_trace
 
   check_required_env_vars
   check_proxy_pass_host
+  check_valid_vault_paths
+  check_valid_vault_url
+  check_valid_serviceaccount_token
+  check_valid_vault_kubernetes_auth_path
+
+  # If VAULT_TOKEN is empty and we don't have a private key literal,
+  # this will populate retrieve the VAULT_TOKEN from Vault with service account JWT
+  if [ -z "$METALS_PRIVATE_KEY" ] && [ -z "$VAULT_TOKEN" ]; then
+    retrieve_vault_token
+    fail_if_env_var_missing "VAULT_TOKEN"
+  fi
 
   local ssl_root_dir="/var/run/ssl"
   mkdir -p $ssl_root_dir

@@ -130,6 +130,7 @@ start_metals ()
     --env METALS_SSL=on \
     --env METALS_SSL_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
+    --env METALS_DEBUG_UNSAFE=false \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
@@ -169,6 +170,7 @@ start_metals_vault ()
     --env METALS_SSL=on \
     --env METALS_SSL_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
+    --env METALS_DEBUG_UNSAFE=false \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
@@ -177,12 +179,12 @@ start_metals_vault ()
     --env VAULT_ADDR="${VAULT_ADDR}" \
     --env VAULT_TOKEN="${VAULT_TOKEN_T}" \
     \
-    --env METALS_VAULT_PATH="secret/data/metals" \
+    --env METALS_VAULT_PATH="secret/data/metals/service" \
     \
-    --env METALS_PUBLIC_CERT_VAULT_KEY="server.crt" \
-    --env METALS_PRIVATE_KEY_VAULT_KEY="server.key" \
-    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="rootca.crt" \
-    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="rootca.crt" \
+    --env METALS_PUBLIC_CERT_VAULT_KEY="server_crt" \
+    --env METALS_PRIVATE_KEY_VAULT_KEY="server_key" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="rootca_crt" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="rootca_crt" \
     \
     --env METALS_HEALTH_CHECK_PATH=/health \
     \
@@ -213,6 +215,7 @@ start_metals_vault_diff_paths ()
     --env METALS_SSL=on \
     --env METALS_SSL_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
+    --env METALS_DEBUG_UNSAFE=false \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
