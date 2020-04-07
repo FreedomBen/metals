@@ -6,14 +6,21 @@ export PODMAN=
 #PODMAN="sudo $(command -v podman) --authfile ~/.docker/config.json"
 PODMAN="sudo $(command -v podman)"
 
+export VAULT_IMAGE='docker.io/vault:1.3.2'
 export METALS_IMAGE='docker.io/freedomben/metals:latest'
 export METALS_EXAMPLE_IMAGE="docker.io/freedomben/metals-example" # Expected to exist locally (you can use build.sh in the root dir to build this)
 
 export METALS_CONTAINER='metals'
 export METALS_EXAMPLE_CONTAINER='metals-example'
+export VAULT_CONTAINER='vault'
 
-export PODNAME=metals-example-pod
+export PODNAME='metals-example-pod'
 export PODFILE="${PODNAME}.yaml"
+
+export VAULT_ADDR='http://localhost:8200'
+export VAULT_TOKEN_T='sjxPvVLhl8Q5PS3yUPQdEJkLd'
+export VAULT_NAMESPACE=
+
 
 export CERTS=certs
 if [ -d scripts/certs ]; then
@@ -138,8 +145,241 @@ start_metals ()
     --name "$METALS_CONTAINER" \
     --pod "$PODNAME" \
     "$METALS_IMAGE" \
-    $1  
+    $1
   echo "Done starting metals"
+}
+
+start_metals_vault ()
+{
+  local det_or_it
+  if [ -n "$1" ]; then
+    det_or_it='-it'
+  else
+    det_or_it='--detach'
+  fi
+
+  echo "Starting metals with vault support..."
+  # double quote on the $1 below breaks the script because
+  # we don't want this to count as an arg unless it's populated
+  # shellcheck disable=SC2086
+  $PODMAN run \
+    $det_or_it \
+    --user 12345 \
+    \
+    --env METALS_SSL=on \
+    --env METALS_SSL_VERIFY_CLIENT=on \
+    --env METALS_DEBUG=true \
+    \
+    --env METALS_PROXY_PASS_PROTOCOL=http \
+    --env METALS_PROXY_PASS_HOST=127.0.0.1 \
+    --env METALS_FORWARD_PORT=8080 \
+    \
+    --env VAULT_ADDR="${VAULT_ADDR}" \
+    --env VAULT_TOKEN="${VAULT_TOKEN_T}" \
+    \
+    --env METALS_VAULT_PATH="secret/data/metals" \
+    \
+    --env METALS_PUBLIC_CERT_VAULT_KEY="server.crt" \
+    --env METALS_PRIVATE_KEY_VAULT_KEY="server.key" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="rootca.crt" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="rootca.crt" \
+    \
+    --env METALS_HEALTH_CHECK_PATH=/health \
+    \
+    --name "$METALS_CONTAINER" \
+    --pod "$PODNAME" \
+    "$METALS_IMAGE" \
+    $1
+  echo "Done starting metals"
+}
+
+start_metals_vault_diff_paths ()
+{
+  local det_or_it
+  if [ -n "$1" ]; then
+    det_or_it='-it'
+  else
+    det_or_it='--detach'
+  fi
+
+  echo "Starting metals with vault support..."
+  # double quote on the $1 below breaks the script because
+  # we don't want this to count as an arg unless it's populated
+  # shellcheck disable=SC2086
+  $PODMAN run \
+    $det_or_it \
+    --user 12345 \
+    \
+    --env METALS_SSL=on \
+    --env METALS_SSL_VERIFY_CLIENT=on \
+    --env METALS_DEBUG=true \
+    \
+    --env METALS_PROXY_PASS_PROTOCOL=http \
+    --env METALS_PROXY_PASS_HOST=127.0.0.1 \
+    --env METALS_FORWARD_PORT=8080 \
+    \
+    --env VAULT_ADDR="${VAULT_ADDR}" \
+    --env VAULT_TOKEN="${VAULT_TOKEN_T}" \
+    \
+    --env METALS_PUBLIC_CERT_VAULT_PATH="secret/data/metals/server" \
+    --env METALS_PRIVATE_PATH_VAULT_PATH="secret/data/metals/server" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_PATH="secret/data/metals/rootca" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_PATH="secret/data/metals/rootca" \
+    \
+    --env METALS_PUBLIC_CERT_VAULT_KEY="crt" \
+    --env METALS_PRIVATE_KEY_VAULT_KEY="key" \
+    --env METALS_SERVER_TRUST_CHAIN_VAULT_KEY="crt" \
+    --env METALS_CLIENT_TRUST_CHAIN_VAULT_KEY="crt" \
+    \
+    --env METALS_HEALTH_CHECK_PATH=/health \
+    \
+    --name "$METALS_CONTAINER" \
+    --pod "$PODNAME" \
+    "$METALS_IMAGE" \
+    $1
+  echo "Done starting metals"
+}
+
+start_vault ()
+{
+  echo "Starting Vault..."
+  $PODMAN run \
+    --cap-add IPC_LOCK \
+    --detach \
+    --pod "$PODNAME" \
+    --env "VAULT_DEV_ROOT_TOKEN_ID=${VAULT_TOKEN_T}" \
+    --name "$VAULT_CONTAINER" \
+    "$VAULT_IMAGE"
+  echo "Done starting vault"
+}
+
+write_path_key_same_path ()
+{
+  curl \
+    -H "X-Vault-Token: ${VAULT_TOKEN_T}" \
+    -H "X-Vault-Request: true" \
+    -H "X-Vault-Namespace: " \
+    -H "Content-Type: application/json" \
+    -X POST \
+    --data "{
+              \"data\": {
+                \"${2}\": \"${3}\",
+                \"${4}\": \"${5}\",
+                \"${6}\": \"${7}\",
+                \"${8}\": \"${9}\",
+                \"${10}\": \"${11}\",
+                \"${12}\": \"${13}\"
+              }
+            }" \
+    "${VAULT_ADDR}/v1/secret/data/$1"
+}
+
+write_path_key_different_path ()
+{
+  curl \
+    -H "X-Vault-Token: ${VAULT_TOKEN_T}" \
+    -H "X-Vault-Request: true" \
+    -H "X-Vault-Namespace: " \
+    -H "Content-Type: application/json" \
+    -X POST \
+    --data "{
+              \"data\": {
+                \"$2\": \"$3\",
+                \"$4\": \"$5\"
+              }
+            }" \
+    "${VAULT_ADDR}/v1/secret/data/$1"
+}
+
+file_to_env_var_vault_write ()
+{
+  awk '{printf "%s\\n", $0}' "$1"
+}
+
+write_keys_to_vault_different_path ()
+{
+  local CLIENT_KEY="$(file_to_env_var_vault_write "$CLIENT_KEY_FILE")"
+  local CLIENT_CRT="$(file_to_env_var_vault_write "$CLIENT_CERT_FILE")"
+
+  local SERVER_KEY="$(file_to_env_var_vault_write "$SERVER_KEY_FILE")"
+  local SERVER_CRT="$(file_to_env_var_vault_write "$SERVER_CERT_FILE")"
+
+  local ROOT_CA_KEY="$(file_to_env_var_vault_write "$TRUST_CHAIN_FILE")"
+  local ROOT_CA_CRT="$(file_to_env_var_vault_write "$TRUST_CHAIN_FILE")"
+
+  write_path_key_different_path "metals/client" \
+    "key" "$CLIENT_KEY" \
+    "crt" "$CLIENT_CRT"
+
+  write_path_key_different_path "metals/server" \
+    "key" "$SERVER_KEY" \
+    "crt" "$SERVER_CRT"
+
+  write_path_key_different_path "metals/rootca" \
+    "key" "$ROOT_CA_KEY" \
+    "crt" "$ROOT_CA_CRT"
+}
+
+write_keys_to_vault_same_path ()
+{
+  local CLIENT_KEY="$(file_to_env_var_vault_write "$CLIENT_KEY_FILE")"
+  local CLIENT_CRT="$(file_to_env_var_vault_write "$CLIENT_CERT_FILE")"
+
+  local SERVER_KEY="$(file_to_env_var_vault_write "$SERVER_KEY_FILE")"
+  local SERVER_CRT="$(file_to_env_var_vault_write "$SERVER_CERT_FILE")"
+
+  local ROOT_CA_KEY="$(file_to_env_var_vault_write "$TRUST_CHAIN_FILE")"
+  local ROOT_CA_CRT="$(file_to_env_var_vault_write "$TRUST_CHAIN_FILE")"
+
+  write_path_key_same_path "metals/service" \
+    "client_key" "$CLIENT_KEY" \
+    "client_crt" "$CLIENT_CRT" \
+    "server_key" "$SERVER_KEY" \
+    "server_crt" "$SERVER_CRT" \
+    "rootca_key" "$ROOT_CA_KEY" \
+    "rootca_crt" "$ROOT_CA_CRT"
+}
+
+get_path_key ()
+{
+  local retval
+  retval=$(curl \
+    -H "Content-Type: application/json" \
+    -H "X-Vault-Token: ${VAULT_TOKEN_T}" \
+    -H "X-Vault-Request: true" \
+    -H "X-Vault-Namespace: " \
+    -X GET \
+    "http://localhost:8200/v1/secret/data/${1}")
+  echo "$retval"
+  if echo "$retval" | grep '..errors' >/dev/null 2>&1; then
+    echo "$retval"
+  else
+    #echo "$retval" | jq -r ".[\"data\"][\"${2}\"]"
+    echo "$retval" | jq -r ".data.${2}"
+  fi
+  echo
+}
+
+read_keys_from_vault_same_path ()
+{
+  get_path_key "metals/service" "data.client_key"
+  get_path_key "metals/service" "data.client_crt"
+  get_path_key "metals/service" "data.server_key"
+  get_path_key "metals/service" "data.server_crt"
+
+  get_path_key "metals/service" "data.rootca_key"
+  get_path_key "metals/service" "data.rootca_crt"
+}
+
+read_keys_from_vault_different_path ()
+{
+  get_path_key "metals/client" "data.key"
+  get_path_key "metals/client" "data.crt"
+  get_path_key "metals/server" "data.key"
+  get_path_key "metals/server" "data.crt"
+
+  get_path_key "metals/rootca" "data.key"
+  get_path_key "metals/rootca" "data.crt"
 }
 
 import_pod ()
@@ -162,6 +402,12 @@ stop_metals_example ()
 {
   $PODMAN stop "$METALS_EXAMPLE_CONTAINER"
   $PODMAN rm "$METALS_EXAMPLE_CONTAINER"
+}
+
+stop_vault ()
+{
+  $PODMAN stop "$VAULT_CONTAINER"
+  $PODMAN rm "$VAULT_CONTAINER"
 }
 
 remove_pod ()

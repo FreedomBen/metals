@@ -187,33 +187,34 @@ All MeTaLS variables are namespaced with `METALS_` at the beginning to avoid con
 
 As long as you accommodate the [default settings](#default-settings), the only required variables are the private key and the certificate and trust chains.
 
-| Variable                                      | Required | Description |
-|-----------------------------------------------|----------|------------------------------------------------------------------------|
-| `METALS_PRIVATE_KEY`:                         | Yes      | Private key of the service in PEM format |
-| `METALS_PUBLIC_CERT`:                         | Yes      | Public certificate of the service in PEM format |
-| `METALS_SERVER_TRUST_CHAIN`:                  | Sort of  | If you put the whole trust chain in METALS_PUBLIC_CERT then you can omit this, otherwise it is required |
-| `METALS_CLIENT_TRUST_CHAIN`:                  | Yes      | Trust chain for valid clients in PEM format |
+| Variable                     | Required | Description |
+|------------------------------|----------|------------------------------------------------------------------------|
+| `METALS_PRIVATE_KEY`:        | Yes      | Private key of the service in PEM format |
+| `METALS_PUBLIC_CERT`:        | Yes      | Public certificate of the service in PEM format |
+| `METALS_SERVER_TRUST_CHAIN`: | Sort of  | If you put the whole trust chain in METALS_PUBLIC_CERT then you can omit this, otherwise it is required |
+| `METALS_CLIENT_TRUST_CHAIN`: | Yes      | Trust chain for valid clients in PEM format |
+
 
 #### Optional Variables
 
 If you want to customize the behavior of MeTaLS, or if you need finer grained control over the settings, you can utilize these optional variables to fine tune the behavior of MeTaLS.  These are all *String* values.
 
-| Variable                                     | Required | Default Value    | Description |
-|----------------------------------------------|----------|-------------------------------|-------------|
-| `METALS_DEBUG`                               | No       | `false`            | Set to `true` for additional logging output |
-| `METALS_DEBUG_UNSAFE`                        | No       | `false`            | Set to `true` for great logging, but risks printing out secrets to the console (which in OpenShift ends up in log files).  This is really useful in dev environments |
-| `METALS_TRACE`                               | No       | `false`            | Set to `true` to get an absurd amount of logging (basically every command will be printed before being run).  You may want to combine this with METALS_DEBUG=true to get every possible message.<br>**WARNING: Do not use METALS_TRACE in production as some sensitive data may be printed to the logs** |
-| `METALS_LISTEN_PORT`                         | No       | `8443`             | If you don't want mTLS nginx to listen on `8443`, set this to the port you want.  It must be above `1024` or else the nginx process won't have permission in the container to bind to it |
-| `METALS_FORWARD_PORT`                        | No       | `8080`             | If your application doesn't listen on `8080`, set this to the correct port for your application. |
-| `METALS_PROXY_PASS_HOST`                     | No       | `127.0.0.1`        | set to hostname of backend service |
-| `METALS_PROXY_PASS_PROTOCOL`                 | No       | `http`             | set to `http` or `https` |
-| `METALS_SSL_SESSION_TIMEOUT`                 | No       | `6m`               | will be passed to nginx as `ssl_session_timeout` |
-| `METALS_SSL_PROTOCOLS`                       | No       | `TLSv1.2 TLSv1.3`  | Versions of TLS that MeTaLS will allow clients to use.  (will be passed to nginx as `ssl_protocols`) |
-| `METALS_SSL_CIPHERS`                         | No       | `HIGH:!aNULL:!MD5` | Defaults to `HIGH:!aNULL:!MD5`.  (will be passed to nginx as `ssl_ciphers` |
-| `METALS_SSL_VERIFY_DEPTH`                    | No       | `7`                | will be passed to nginx as `ssl_verify_depth`.  If you have long trust chains, you may need to increase this |
-| `METALS_SSL`                                 | No       | `on`               | **WARNING: If you set this to `"off"` TLS will be completely disabled, meaning all traffic is plain text!**<br>Defaults to `"on"`.  Disabling SSL can be very useful for debugging, but don't forget to re-enable it before deploying |
-| `METALS_SSL_VERIFY_CLIENT`                   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
-| `METALS_SLEEP_ON_FATAL`                      | No       | `""`               | Setting this to an integer value will cause the container to sleep for this many seconds after encountering a fatal error.  This is useful for keeping a pod alive while you inspect logs to determine what went wrong |
+| Variable                     | Required | Default Value      | Description |
+|------------------------------|----------|--------------------|-------------|
+| `METALS_DEBUG`               | No       | `false`            | Set to `true` for additional logging output |
+| `METALS_DEBUG_UNSAFE`        | No       | `false`            | Set to `true` for great logging, but risks printing out secrets to the console (which in OpenShift ends up in log files).  This is really useful in dev environments |
+| `METALS_TRACE`               | No       | `false`            | Set to `true` to get an absurd amount of logging (basically every command will be printed before being run).  You may want to combine this with METALS_DEBUG=true to get every possible message.<br>**WARNING: Do not use METALS_TRACE in production as some sensitive data may be printed to the logs** |
+| `METALS_LISTEN_PORT`         | No       | `8443`             | If you don't want mTLS nginx to listen on `8443`, set this to the port you want.  It must be above `1024` or else the nginx process won't have permission in the container to bind to it |
+| `METALS_FORWARD_PORT`        | No       | `8080`             | If your application doesn't listen on `8080`, set this to the correct port for your application. |
+| `METALS_PROXY_PASS_HOST`     | No       | `127.0.0.1`        | set to hostname of backend service |
+| `METALS_PROXY_PASS_PROTOCOL` | No       | `http`             | set to `http` or `https` |
+| `METALS_SSL_SESSION_TIMEOUT` | No       | `6m`               | will be passed to nginx as `ssl_session_timeout` |
+| `METALS_SSL_PROTOCOLS`       | No       | `TLSv1.2 TLSv1.3`  | Versions of TLS that MeTaLS will allow clients to use.  (will be passed to nginx as `ssl_protocols`) |
+| `METALS_SSL_CIPHERS`         | No       | `HIGH:!aNULL:!MD5` | Defaults to `HIGH:!aNULL:!MD5`.  (will be passed to nginx as `ssl_ciphers` |
+| `METALS_SSL_VERIFY_DEPTH`    | No       | `7`                | will be passed to nginx as `ssl_verify_depth`.  If you have long trust chains, you may need to increase this |
+| `METALS_SSL`                 | No       | `on`               | **WARNING: If you set this to `"off"` TLS will be completely disabled, meaning all traffic is plain text!**<br>Defaults to `"on"`.  Disabling SSL can be very useful for debugging, but don't forget to re-enable it before deploying |
+| `METALS_SSL_VERIFY_CLIENT`   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
+| `METALS_SLEEP_ON_FATAL`      | No       | `""`               | Setting this to an integer value will cause the container to sleep for this many seconds after encountering a fatal error.  This is useful for keeping a pod alive while you inspect logs to determine what went wrong |
 
 #### Skipping Client Auth for certain paths (such as Health Checks)
 
@@ -222,11 +223,56 @@ If you need to allow certain paths through without client authentication, you ca
 | Variable                                      | Required | Default Value    | Description |
 |-----------------------------------------------|----------|-------------------------------|-------------|
 | `METALS_SKIP_CLIENT_AUTH_PATH`<br />`METALS_SKIP_CLIENT_AUTH_PATH_0`<br />`METALS_SKIP_CLIENT_AUTH_PATH_2`<br />`METALS_SKIP_CLIENT_AUTH_PATH_3`       | No       | `""`               | Setting this to a path will cause the container to proxy requests to this path to the backend *without performing client authentication*.  This is useful for health check endpoints for example, where the health checker (such as a Kubelet) does not have a valid certificate |
-| `METALS_SKIP_CLIENT_AUTH_LISTEN_PORT`        | No       | `""`               | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
+| `METALS_SKIP_CLIENT_AUTH_LISTEN_PORT`         | No       | `""`               | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
 | `METALS_HEALTH_CHECK_PATH`<br />`METALS_HEALTH_CHECK_PATH_0`<br />`METALS_HEALTH_CHECK_PATH_1`<br />`METALS_HEALTH_CHECK_PATH_2`<br />`METALS_HEALTH_CHECK_PATH_3`     | No       | `""`               | Setting this to a path will cause the container to proxy requests to this path to the backend *without performing client authentication*.  This is useful for health check endpoints for example, where the health checker (such as a Kubelet) does not have a valid certificate |
-| `METALS_HEALTH_CHECK_LISTEN_PORT`            | No       | `9443`             | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
+| `METALS_HEALTH_CHECK_LISTEN_PORT`             | No       | `9443`             | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
 
 You may notice that `METALS_SKIP_CLIENT_AUTH_PATH` and `METALS_HEALTH_CHECK_PATH` do the same thing.  Good observation!  This is by design to allow you to choose the one with more semantic meaning for you.  I tried to choose self-documenting variable names that would describe their function.  If you are skipping client authentication for health check reasons, you may wish to choose the `METALS_HEALTH_CHECK_PATH` version as it's more self-documenting.  Ultimately however, the choice is up to you.
+
+#### Vault Integration
+
+If you use [Hashicorp Vault](https://www.vaultproject.io/) for storing secrets, MeTaLS can pull the service private key and/or certificates down from Vault upon initialization.
+
+MeTaLS provides two options for authenticating with Vault:
+
+1.  Provide [a `VAULT_TOKEN`](https://www.vaultproject.io/docs/concepts/tokens/) directly
+1.  Use the [Kubernetes Auth Method](https://www.vaultproject.io/docs/auth/kubernetes/) to authenticate using the [Kubernetes Service Account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+
+The service account method is recommended if available, as it removes the need to manage the token, and eliminates the risk of token expiration.
+
+If you wish to use the Vault integration, provide a way for MeTaLS to authenticate to Vault:
+
+| Variable                | Required | Default               | Description |
+|-------------------------|----------|-----------------------|-------------------------------|
+| `VAULT_TOKEN`:          | Yes      |                       | API token that can be used to retrieve Vault secrets |
+|     or                  |          |                       |  |
+| `VAULT_ROLE`:           | Yes      |                       | Vault role to use when authenticating to Vault using the Kubernetes service account |
+| `VAULT_KUBE_AUTH_PATH`: | No       | `v1/kubernetes/login` | Path where Vault's Kubernetes auth endpoint is listening |
+
+And tell MeTaLS where you put your key and/or certificates:
+
+| Variable                         | Required | Description |
+|----------------------------------|----------|-------------|
+| `VAULT_ADDR`:                    | Yes      | URL for Vault.  Example:  https://vault.example.com |
+| `VAULT_NAMESPACE`:               | No       | If using Enterprise Vault and namespaces, provide the namespace here. If not using namespaces then leave this empty |
+| `METALS_VAULT_PATH`:             | Yes      | Path to the secret that contains the key and/or certs.  [If you use different vault paths](#If-you-use-different-Vault-paths-for-some-secrets) for some secrets, see [below](#If-you-use-different-Vault-paths-for-some-secrets).  Example: secret/data/metals |
+| `METALS_PRIVATE_KEY_VAULT_KEY`:  | Yes      | Vault key where the service's private key is stored.  Example:  "private_key" |
+| `METALS_PUBLIC_CERT_VAULT_KEY`:  | Yes      | Vault key where the service's public cert is stored.  Example:  "public_cert" |
+| `METALS_SERVER_CHAIN_VAULT_KEY`: | Yes      | Vault key where the server's trust chain is stored.  Example:  "server_chain" |
+| `METALS_CLIENT_CHAIN_VAULT_KEY`: | Yes      | Vault key where the client's trust chain is stored.  Example:  "client_chain" |
+
+
+##### If you use different Vault paths for some secrets
+
+If you use different Vault paths for some of the secrets, you can specify them individually by using these variables.  If these variables are populated, they will take precedence for the corresponding secret over `METALS_VAULT_PATH`
+
+| Variable                          | Required | Description |
+|-----------------------------------|----------|-------------|
+| `METALS_PRIVATE_KEY_VAULT_PATH`:  | No       | Vault key where the service's private key is stored.  Example:  secret/data/metals/key |
+| `METALS_PUBLIC_CERT_VAULT_PATH`:  | No       | Vault key where the service's public cert is stored.  Example:  secret/data/metals/cert |
+| `METALS_SERVER_CHAIN_VAULT_PATH`: | No       | Vault key where the server's trust chain is stored.  Example:  secret/data/metals/server_chain |
+| `METALS_CLIENT_CHAIN_VAULT_PATH`: | No       | Vault key where the client's trust chain is stored.  Example:  secret/data/metals/client_chain |
+
 
 ### Pre-Built Images
 

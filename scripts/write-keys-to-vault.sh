@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 # shellcheck disable=1091
 if [ -f common.sh ]; then
   . common.sh
@@ -11,6 +9,10 @@ else
   echo "Couldn't find common.sh.  Run from root dir or scripts dir"
 fi
 
+main ()
+{
+  write_keys_to_vault_same_path
+  write_keys_to_vault_different_path
+}
 
-sudo podman stop "$METALS_EXAMPLE_CONTAINER"
-sudo podman rm "$METALS_EXAMPLE_CONTAINER"
+main "$@"
