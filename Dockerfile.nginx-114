@@ -3,11 +3,11 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-407
 # Once upsteam dependency issue with nginx package is sorted out,
 # update FROM to be from 8:1
 
-ENV METALS_VERSION 0.1.0
+ENV METALS_VERSION 0.2.0
 
 LABEL io.k8s.description="metals: a drop-in mTLS solution" \
-  io.k8s.display-name="metals-example v${METALS_VERSION} tini" \
-  io.openshift.tags="tls,mtls,tini" \
+  io.k8s.display-name="metals-example v${METALS_VERSION} dumb-init" \
+  io.openshift.tags="tls,mtls,dumb-init" \
   name="metals" \
   architecture="x86_64" \
   maintainer="github.com/FreedomBen"
@@ -25,16 +25,9 @@ RUN microdnf update -y \
 # We need to be able to write the nginx config file
 RUN chmod g+rwx /etc/nginx/conf.d
 
-# Install tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc /tini.asc
-RUN gpg \
-  --batch \
-  --keyserver hkp://p80.pool.sks-keyservers.net:80 \
-  --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
- && gpg --batch --verify /tini.asc /tini \
- && chmod 0555 /tini
+# Install dumb-init
+RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 \
+ && chmod +x /usr/local/bin/dumb-init
 
 # In OpenShift our user ID will be random and not root,
 RUN mkdir -p /mtls/default-certificates /var/run/ssl \
@@ -49,5 +42,5 @@ COPY start.sh /mtls
 
 EXPOSE 8443
 
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
 CMD [ "/mtls/start.sh" ]

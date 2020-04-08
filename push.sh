@@ -21,21 +21,30 @@ main ()
     die 'Could not find podman or docker.  Make sure one is installed'
   fi
 
-  # Push the images up
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals:latest
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals:1.0
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals:latest
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals:1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals:0.1
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals:0.1
 
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-dumb-init:latest
-  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-dumb-init:1.0
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-dumb-init:latest
-  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-dumb-init:1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-116:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-116:0.1
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-116:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-116:0.1
 
-  $PODMAN push quay.io/freedomben/metals-tini:latest
-  $PODMAN push quay.io/freedomben/metals-tini:1.0
-  $PODMAN push docker.io/freedomben/metals-tini:latest
-  $PODMAN push docker.io/freedomben/metals-tini:1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-114:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-114:0.1
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-114:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-114:0.1
+
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-117:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-nginx-117:0.1
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-117:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-nginx-117:0.1
+
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-tini:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json quay.io/freedomben/metals-tini:0.1
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-tini:0.1.0
+  $PODMAN push --authfile ~/.docker/config.json docker.io/freedomben/metals-tini:0.1
 }
 
 main "$@"
