@@ -5,6 +5,10 @@
 export PODMAN=
 #PODMAN="sudo $(command -v podman) --authfile ~/.docker/config.json"
 PODMAN="sudo $(command -v podman)"
+PODMAN_AUTHFILE="$HOME/.docker/config.json"
+
+export DEFAULT_DOCKERFILE='Dockerfile.nginx-116'
+export DEFAULT_RELEASE='116'
 
 export VAULT_IMAGE='docker.io/vault:1.3.2'
 export METALS_IMAGE='docker.io/freedomben/metals-nginx-116:latest'
@@ -49,6 +53,52 @@ export CLIENT_KEY_FILE="$CERT_DIR/server.key"
 export CLIENT_CERT_FILE="$CERT_DIR/server.crt"
 export TRUST_CHAIN_FILE="$CERT_DIR/rootca.crt"
 
+# Building an pushing functions
+extract_version ()
+{
+  awk '/^ENV METALS_VERSION/ { print $3 }' "$1"
+}
+
+check_extract_version ()
+{
+  cur_ver="$(extract_version "$DEFAULT_DOCKERFILE")"
+
+  # Check every Dockerfile to make sure versions are the same
+  for dockerfile in Dockerfile.*; do
+    vers=$(extract_version "$dockerfile")
+    if [ "$vers" != "$cur_ver" ]; then
+      die "The Dockerfile at $dockerfile has a different version than $DEFAULT_DOCKERFILE!  $DEFAULT_DOCKERFILE has version '$cur_ver' but $dockerfile has version '$vers'.  If you are releasing a new version make sure to update all the Dockerfiles"
+    fi
+  done
+
+  echo "$cur_ver"
+}
+
+parse_short_version ()
+{
+  echo "$1" | sed -E -e 's/\.[0-9]$//g'
+}
+
+build_dockerfile ()
+{
+  echo -e "\033[1;36mBuilding 'Dockerfile.${1}' for version '${2}', short version '${3}'\033[0m"
+
+  $PODMAN build \
+    -t "quay.io/freedomben/metals-${1}:${2}" \
+    -t "quay.io/freedomben/metals-${1}:${3}" \
+    -t "docker.io/freedomben/metals-${1}:${2}" \
+    -t "docker.io/freedomben/metals-${1}:${3}" \
+    -f "Dockerfile.${1}" \
+    .
+}
+
+push_image ()
+{
+  echo -e "\033[1;36mPushing image '${1}'\033[0m"
+
+  $PODMAN push --authfile "${PODMAN_AUTHFILE}" "${1}"
+}
+
 file_to_env_var ()
 {
   # This shellcheck is wrong in this case.  Without using
@@ -64,7 +114,8 @@ export TRUST_CHAIN="$(file_to_env_var "$TRUST_CHAIN_FILE")"
 
 die ()
 {
-  echo "[DIE]: $1"
+  echo "[DIE]: $1" >&2
+  exit 1
 }
 
 create_pod ()

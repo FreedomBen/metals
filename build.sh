@@ -2,67 +2,37 @@
 
 set -e
 
-PODMAN=""
-
-die ()
-{
-  echo "[DIE]: $1"
-}
+. scripts/common.sh
 
 main ()
 {
-  if [ -n "$1" ]; then 
-    PODMAN="$1"
-  elif command -v podman; then
-    PODMAN="sudo $(command -v podman)"
-  elif command -v docker; then
-    PODMAN="$(command -v docker)"
-  else
-    die 'Could not find podman or docker.  Make sure one is installed'
-  fi
+  local current_version
+  local short_version
+  current_version="$(check_extract_version)"
+  short_version="$(parse_short_version "$current_version")"
 
-  DEFAULT_RELEASE='116'
+  build_dockerfile "nginx-116" "$current_version" "$short_version"
+  build_dockerfile "nginx-114" "$current_version" "$short_version"
+  build_dockerfile "nginx-117" "$current_version" "$short_version"
+  build_dockerfile "tini" "$current_version" "$short_version"
 
-  $PODMAN build \
-    -t quay.io/freedomben/metals-nginx-116:latest \
-    -t quay.io/freedomben/metals-nginx-116:1.0 \
-    -t docker.io/freedomben/metals-nginx-116:latest \
-    -t docker.io/freedomben/metals-nginx-116:1.0 \
-    -f Dockerfile.nginx-116 \
-    .
-
-  $PODMAN build \
-    -t quay.io/freedomben/metals-nginx-114:latest \
-    -t quay.io/freedomben/metals-nginx-114:1.0 \
-    -t docker.io/freedomben/metals-nginx-114:latest \
-    -t docker.io/freedomben/metals-nginx-114:1.0 \
-    -f Dockerfile.nginx-114 \
-    .
-
-  $PODMAN build \
-    -t quay.io/freedomben/metals-nginx-117:latest \
-    -t quay.io/freedomben/metals-nginx-117:1.0 \
-    -t docker.io/freedomben/metals-nginx-117:latest \
-    -t docker.io/freedomben/metals-nginx-117:1.0 \
-    -f Dockerfile.nginx-117 \
-    .
+  echo -e "\033[1;36mTagging 'metals-nginx-${DEFAULT_RELEASE}' as metals'"
 
   $PODMAN tag \
-    quay.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:latest \
-    quay.io/freedomben/metals:latest
+    "quay.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:${current_version}" \
+    "quay.io/freedomben/metals:${current_version}"
 
   $PODMAN tag \
-    docker.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:latest \
-    docker.io/freedomben/metals:latest
+    "quay.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:${short_version}" \
+    "quay.io/freedomben/metals:${short_version}"
 
+  $PODMAN tag \
+    "docker.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:${current_version}" \
+    "docker.io/freedomben/metals:${current_version}"
 
-#  $PODMAN build \
-#    -t quay.io/freedomben/metals-tini:latest \
-#    -t quay.io/freedomben/metals-tini:1.0 \
-#    -t docker.io/freedomben/metals-tini:latest \
-#    -t docker.io/freedomben/metals-tini:1.0 \
-#    -f Dockerfile.tini \
-#    .
+  $PODMAN tag \
+    "docker.io/freedomben/metals-nginx-${DEFAULT_RELEASE}:${short_version}" \
+    "docker.io/freedomben/metals:${short_version}"
 }
 
 main "$@"
