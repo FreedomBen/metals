@@ -3,12 +3,13 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-407
 # Once upsteam dependency issue with nginx package is sorted out,
 # update FROM to be from 8:1
 
+ENV NGINX_VERSION 1.14
 ENV METALS_VERSION 0.2.0
 
-LABEL io.k8s.description="metals: a drop-in mTLS solution" \
-  io.k8s.display-name="metals-example v${METALS_VERSION} dumb-init" \
+LABEL io.k8s.description="MeTaLS: a drop-in mTLS solution" \
+  io.k8s.display-name="MeTaLS v${METALS_VERSION}" \
   io.openshift.tags="tls,mtls,dumb-init" \
-  name="metals" \
+  name="MeTaLS" \
   architecture="x86_64" \
   maintainer="github.com/FreedomBen"
 
