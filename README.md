@@ -66,11 +66,11 @@ For more information about the sidecar pattern, I recommend the official [OpenSh
 
 Here is a diagram of the simplest possible usage (a local Pod running on a single machine.  This is what you might use in development with a tool like [Podman](https://podman.io) for example):
 
-<img src="https://github.com/FreedomBen/metals/raw/master/docs/images/metals-basic.png" alt="MeTaLS Basic Diagram" width="450" />
+<img src="https://github.com/FreedomBen/metals/raw/master/docs/images/metals-basic-3.png" alt="MeTaLS Basic Diagram" align="center" width="450" />
 
 If you are going to deploy to [Kubernetes](https://kubernetes.io) or [OpenShift](https://www.openshift.com/), your architecture may look more like this:
 
-<img src="https://github.com/FreedomBen/metals/raw/master/docs/images/metals-k8s.png" alt="MeTaLS Kubernetes Diagram" width="800" />
+<img src="https://github.com/FreedomBen/metals/raw/master/docs/images/metals-k8s-3.png" alt="MeTaLS Kubernetes Diagram" align="center" width="850" />
 
 ### What About Health Checks?
 
