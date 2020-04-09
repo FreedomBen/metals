@@ -64,73 +64,14 @@ Nginx is configured automatically (based on environment variables supplied to it
 
 For more information about the sidecar pattern, I recommend the official [OpenShift blog on the subject](https://blog.openshift.com/patterns-application-augmentation-openshift/) as well as [this blog on the Sidecar Pattern](https://www.magalix.com/blog/the-sidecar-pattern) and [this post with some good reasons to use a sidecar](https://aws.amazon.com/blogs/compute/nginx-reverse-proxy-sidecar-container-on-amazon-ecs/).
 
-Here is a rough sketch of the simplest possible usage (a local Pod running on a single machine.  This is what you might use in development for example):
+Here is a diagram of the simplest possible usage (a local Pod running on a single machine.  This is what you might use in development with a tool like [Podman](https://podman.io) for example):
 
-```
-                   +----------------+
-                   |                |
-                   |     Client     |
-                   |                |
-                   +----+-----^-----+
-                        |     |
-                        |     |
-                +-----------------------+
-                |Pod    |     |         |
-                |   +---v-----+-----+   |
-                |   |               |   |
-                |   | MeTaLS (mTLS) |   |
-                |   |   (Sidecar)   |   |
-                |   |               |   |
-                |   +---+-----^-----+   |
-                |       |     |         |
-                |   +---v-----+-----+   |
-                |   |               |   |
-                |   |  Application  |   |
-                |   |               |   |
-                |   +---------------+   |
-                +-----------------------+
-```
+![MeTaLS Basic Diagram](docs/images/metals-basic.png)
 
-If you are going to deploy to something like [OpenShift](https://www.openshift.com/), your architecture may look more like this:
+If you are going to deploy to [Kubernetes](https://kubernetes.io) or [OpenShift](https://www.openshift.com/), your architecture may look more like this:
 
-```
-                   +-----------------+
-                   |                 |
-                   |     Client      |
-                   |                 |
-                   +----+-----^------+
-                        |     |
-                        |     |
-                   +----v-----+------+
-                   |                 |
-                   | Router/Ingress  |
-                   |                 |
-                   +----+-----^------+
-                        |     |
-                        |     |
-                   +----v-----+------+
-                   |                 |
-                   |     Service     |
-                   |                 |
-                   +----+-----^------+
-                        |     |
-                        |     |
-                +-----------------------+
-                |Pod    |     |         |
-                |   +---v-----+-----+   |
-                |   |               |   |
-                |   | MeTaLS (mTLS) |   |
-                |   |   (Sidecar)   |   |
-                |   |               |   |
-                |   +---+-----^-----+   |
-                |       |     |         |
-                |   +---v-----+-----+   |
-                |   |               |   |
-                |   |  Application  |   |
-                |   |               |   |
-                |   +---------------+   |
-                +-----------------------+
-```
+![MeTaLS Kubernetes Diagram](docs/images/metals-k8s.png)
+
 
 ### What About Health Checks?
 
