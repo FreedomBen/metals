@@ -1,41 +1,10 @@
 # What is mTLS and How Does it Work?
 
-## Part 1
+## Part 2 - TLS and mTLS
 
 *Written by:  Benjamin Porter*
 
-You are a developer, and you've just been given a requirement to add mTLS to your service.  If you just died a little inside, you are not alone!  Speaking the language of mTLS is something developers have largely not had to do, but as we increasingly move toward Platforms as a Service and DevOps, more of the burden for configuring mTLS is falling on developers.
-
-This blog post is intended to help introduce you to the concepts surrounding mTLS so they stop seeming like magic black boxes.  In later posts I'll walk you through adding mTLS to one of your existing web services, but for now let's focus on understanding the concepts.
-
-## Asymmetric Encryption - important to understand
-
-### A quick overview of Symmetric Encryption
-
-Broadly speaking, encryption comes in two flavors:  Symmetric and Asymmetric.  Symmetric is what you think of most often, where the same key (or password) is used to both encrypt and decrypt the file.  The most popular symmetric encryption algorithm is AES, used almost everywhere.  Symmetric encryption is great because it can be done in hardware and is very simple to understand.  If you have the key, you have the data, and performance is great thanks to the available hardware implementations.
-
-However, symmetric encryption is not all roses.  It suffers from a problem:  all parties to the conversation need to know the key, and the key can't be encrypted.  Exchanging the shared key in a secure way is difficult.  You can't encrypt it with itself because the receiver doesn't have it yet.  What we have here, is a [chicken or the egg](https://en.wikipedia.org/wiki/Chicken_or_the_egg) problem!  You could try sending the key through a different medium, but that runs the risk that [Eve](https://en.wikipedia.org/wiki/Alice_and_Bob) may be listening on that medium as well, and could intercept your key and gain access to the data!  We have a non-trivial problem here.
-
-Asymmetric encryption is here to help!  In Asymmetric encryption, rather than using a single key to both encrypt and decrypt the data, each party to the conversation has two keys: a private and a public key.
-
-In line with their names, the private key is always kept an absolute secret.  In fact, it is _never_ even transmitted or disclosed anywhere.
-
-Ideally the private key should never leave the machine on which it is generated.  In the real world sometimes it is necessary to move it, but proper precautions should be taken to protect the private key in transit.
-
-The public key is the exact opposite:  It is published as widely as possible.  These two keys are related mathematically such that they undo each other.  If you encrypt with the public key, only the private key can decrypt it, and vice versa.  Without knowing both keys, you can only do one-way encryption.
-
-Think of it this way.  When you were learning exponents, it was easy to calculate the  #TODO
-
-This is great because we now have a solution for exchanging our symmetric key!  If Alice wants to send Bob a message, she can encrypt the message with Bob's _public key_ (which is widely available).  Now, only *Bob* can decrypt this message, because only he has his private key.  If the message is intercepted it will do no good.  Running it through the public key again will yield gibberish.  Perfect!
-
-We now have achieved one of two important goals:  We have confidentiality (or secrecy).  But, thinking more about the incredible relationship between these two mathematically-related keys, we can take this a bit further and achieve the second of our two important goals.
-<here>
-
-How does Bob know that Alice is the one who sent the message, and not Eve playing a trick on him?  With what we currently have, he does not know.  However, because we know the mathematical relationship between the public/private key pairs, there is a handy solution here!  Alice can encrypt a known message using her *private* key.  Anyone in the world can then decrypt this message with Alice's *public* key, and know that only Alice could have sent it because only Alice has the private key required to encrypt that message!  This is called message signing, and it gets us to our other goal:  integrity.  If somebody changes the message, it will no longer decrypt properly with Alice's public key, so we can know both that Alice sent it (non-repudiation) and that nobody has tampered with it.
-
-We have a pretty valuable communication tool now!  By combining the two capabilities of asymmetric encryption, we can both hide the contents of a message and also ensure the identity of the senders at the same time.  We now have enough tools to talk about TLS!
-
-## So what is TLS?
+## What is TLS?
 
 Before reaching our goal of understanding mTLS you need to understand TLS.  There are tons of resources out there that vary in technical depth.  My goal here is familiarization, not mastering (which requires complex understanding of cryptography and various standards like [X.509](https://en.wikipedia.org/wiki/X.509).
 
