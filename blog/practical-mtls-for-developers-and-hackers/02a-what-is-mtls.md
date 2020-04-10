@@ -3,9 +3,9 @@
 *Written by:  Benjamin Porter*
 
 Why you should care:
-* You can't understand SSL/TLS/mTLS without asymmetric encryption
-* It's hard to add SSL/TLS/mTLS to your app if you don't understand it
-* These days you need SSL/TLS/mTLS on your website/app if only to get greater SEO and protect your users' privacy
+* You can't understand the language of SSL/TLS/mTLS without the language of asymmetric encryption
+* It's hard to add SSL/TLS/mTLS to your app if you don't understand the language
+* You need SSL/TLS/mTLS on your website/app if only for the improved SEO and to protect your users' privacy
 
 Asymmetric encryption is one of those things that you use hundreds of times a day, but rarely if ever notice it.  The ideas behind it are in widespread use, but most of the time you don't need to understand it to benefit from it.
 
