@@ -19,9 +19,6 @@ RUN dnf update -y \
     jq \
  && dnf clean all -y
 
-# We need to be able to write the nginx config file
-RUN chmod g+rwx /etc/nginx/conf.d
-
 # Install tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -33,8 +30,10 @@ RUN gpg \
  && gpg --batch --verify /tini.asc /tini \
  && chmod 0555 /tini
 
+# We need to be able to write the nginx config file
 # In OpenShift our user ID will be random and not root,
-RUN mkdir -p /mtls/default-certificates /var/run/ssl \
+RUN chmod g+rwx /etc /etc/nginx /etc/nginx/conf.d \
+ && mkdir -p /mtls/default-certificates /var/run/ssl \
  && chgrp -R 0 /mtls /var/run/ssl \
  && chmod -R g+rwX /mtls /var/run/ssl \
  && chmod g+rwX /var /var/{log,run}
