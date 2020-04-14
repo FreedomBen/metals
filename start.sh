@@ -159,7 +159,7 @@ warn_or_die_on_ssl ()
   # If SSL is disabled then we can proceed without valid certs,
   # Meaning we do not need to exit.  If SSL is enabled then we
   # need to fail rather than risk starting with a bad key/cert
-  if [ "${METALS_SSL}" = "off" ]; then
+  if [ "${METALS_TLS_ENABLED}" = "off" ]; then
     warn "$1"
   else
     die "$1"
@@ -458,16 +458,16 @@ nginx_server_block ()
         listen       [::]:${6:-"8443"} default_server;
         server_name  ${METALS_SERVER_NAME:-"_"};
         root         /usr/share/nginx/html;
-        ssl                     ${METALS_SSL:-"on"};
+        ssl                     ${METALS_TLS_ENABLED:-"on"};
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");
         ssl_trusted_certificate $(valid_pem_file "$3" "/mtls/default-certificates/rootca.crt");
         ssl_client_certificate  $(valid_pem_file "$4" "/mtls/default-certificates/rootca.crt");
-        ssl_verify_depth        ${METALS_SSL_VERIFY_DEPTH:-"5"};
+        ssl_verify_depth        ${METALS_TLS_VERIFY_DEPTH:-"5"};
         ssl_verify_client       ${5:-"on"};
-        ssl_session_timeout     ${METALS_SSL_SESSION_TIMEOUT:-"5m"};
-        ssl_protocols  ${METALS_SSL_PROTOCOLS:-"TLSv1.2 TLSv1.3"};
-        ssl_ciphers  ${METALS_SSL_CIPHERS:-"HIGH:!aNULL:!MD5"};
+        ssl_session_timeout     ${METALS_TLS_SESSION_TIMEOUT:-"5m"};
+        ssl_protocols  ${METALS_TLS_PROTOCOLS:-"TLSv1.2 TLSv1.3"};
+        ssl_ciphers  ${METALS_TLS_CIPHERS:-"HIGH:!aNULL:!MD5"};
         ssl_prefer_server_ciphers   on;
 
         #resolver 127.0.0.11 valid=30s;
@@ -497,16 +497,16 @@ generate_nginx_config_no_health_checks ()
         listen       [::]:${METALS_LISTEN_PORT:-"8443"} default_server;
         server_name  ${METALS_SERVER_NAME:-"_"};
         root         /usr/share/nginx/html;
-        ssl                     ${METALS_SSL:-"on"};
+        ssl                     ${METALS_TLS_ENABLED:-"on"};
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");
         ssl_trusted_certificate $(valid_pem_file "$3" "/mtls/default-certificates/rootca.crt");
         ssl_client_certificate  $(valid_pem_file "$4" "/mtls/default-certificates/rootca.crt");
-        ssl_verify_depth        ${METALS_SSL_VERIFY_DEPTH:-"5"};
-        ssl_verify_client       ${METALS_SSL_VERIFY_CLIENT:-"on"};
-        ssl_session_timeout     ${METALS_SSL_SESSION_TIMEOUT:-"5m"};
-        ssl_protocols  ${METALS_SSL_PROTOCOLS:-"TLSv1.2 TLSv1.3"};
-        ssl_ciphers  ${METALS_SSL_CIPHERS:-"HIGH:!aNULL:!MD5"};
+        ssl_verify_depth        ${METALS_TLS_VERIFY_DEPTH:-"5"};
+        ssl_verify_client       ${METALS_TLS_VERIFY_CLIENT:-"on"};
+        ssl_session_timeout     ${METALS_TLS_SESSION_TIMEOUT:-"5m"};
+        ssl_protocols  ${METALS_TLS_PROTOCOLS:-"TLSv1.2 TLSv1.3"};
+        ssl_ciphers  ${METALS_TLS_CIPHERS:-"HIGH:!aNULL:!MD5"};
         ssl_prefer_server_ciphers   on;
 
         #resolver 127.0.0.11 valid=30s;
@@ -553,7 +553,7 @@ generate_nginx_config ()
 
     # Main block for proxy (requires client auth)
     server {
-      $(nginx_server_block "$1" "$2" "$3" "$4" "${METALS_SSL_VERIFY_CLIENT:-'on'}" "${METALS_LISTEN_PORT:-8443}")
+      $(nginx_server_block "$1" "$2" "$3" "$4" "${METALS_TLS_VERIFY_CLIENT:-'on'}" "${METALS_LISTEN_PORT:-8443}")
 
       location / {
         $(nginx_location_block)
@@ -804,7 +804,7 @@ main ()
     "$ssl_certificate" \
     "$ssl_trusted_certificate" \
     "$ssl_client_certificate" \
-    "$METALS_SSL_VERIFY_CLIENT" \
+    "$METALS_TLS_VERIFY_CLIENT" \
     "$METALS_HEALTH_CHECK_LISTEN_PORT" \
 
 #  generate_nginx_config_no_health_checks \

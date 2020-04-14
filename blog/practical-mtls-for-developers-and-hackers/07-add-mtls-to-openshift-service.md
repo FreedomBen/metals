@@ -147,8 +147,8 @@ Next let's create a ConfigMap with our other values in it.  We'll include the pu
       app: metals-example
     name: metals-example-settings
   data:
-    METALS_SSL: "on"
-    METALS_SSL_VERIFY_CLIENT: "on"
+    METALS_TLS_ENABLED: "on"
+    METALS_TLS_VERIFY_CLIENT: "on"
     METALS_DEBUG: "true"
     METALS_FORWARD_PORT: "8080"
     METALS_PROXY_PASS_PROTOCOL: "http"
@@ -269,8 +269,8 @@ items:
       app: metals-example
     name: metals-example-settings
   data:
-    METALS_SSL: "on"
-    METALS_SSL_VERIFY_CLIENT: "on"
+    METALS_TLS_ENABLED: "on"
+    METALS_TLS_VERIFY_CLIENT: "on"
     METALS_DEBUG: "true"
     METALS_FORWARD_PORT: "8080"
     METALS_PROXY_PASS_PROTOCOL: "http"

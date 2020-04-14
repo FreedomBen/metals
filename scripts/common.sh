@@ -178,8 +178,8 @@ start_metals ()
     $det_or_it \
     --user 12345 \
     \
-    --env METALS_SSL=on \
-    --env METALS_SSL_VERIFY_CLIENT=on \
+    --env METALS_TLS_ENABLED=on \
+    --env METALS_TLS_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
     \
@@ -218,8 +218,8 @@ start_metals_vault ()
     $det_or_it \
     --user 12345 \
     \
-    --env METALS_SSL=on \
-    --env METALS_SSL_VERIFY_CLIENT=on \
+    --env METALS_TLS_ENABLED=on \
+    --env METALS_TLS_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
     \
@@ -263,8 +263,8 @@ start_metals_vault_diff_paths ()
     $det_or_it \
     --user 12345 \
     \
-    --env METALS_SSL=on \
-    --env METALS_SSL_VERIFY_CLIENT=on \
+    --env METALS_TLS_ENABLED=on \
+    --env METALS_TLS_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
     \

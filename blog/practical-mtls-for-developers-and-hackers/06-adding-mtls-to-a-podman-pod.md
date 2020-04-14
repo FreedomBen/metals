@@ -104,8 +104,8 @@ We're ready to add metals!  All of the configuration for metals comes through en
 podman run \
   --detach \
   \
-  --env METALS_SSL=off \
-  --env METALS_SSL_VERIFY_CLIENT=off \
+  --env METALS_TLS_ENABLED=off \
+  --env METALS_TLS_VERIFY_CLIENT=off \
   --env METALS_DEBUG=true \
   \
   --env METALS_PROXY_PASS_PROTOCOL=http \

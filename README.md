@@ -78,7 +78,7 @@ If you are going to deploy to [Kubernetes](https://kubernetes.io) or [OpenShift]
 
 ### What About Health Checks?
 
-If the entity doing the health checks has a valid certificate (per the client trustchain), then nothing special need to be done to support health checks.
+If the entity doing the health checks has a valid certificate (per the client trust chain), then nothing special need to be done to support health checks.
 
 However, if the health checker does *not* have a valid certificate, then health checks will fail because nginx will deny access and will not proxy the request.  To work around this you can set some variables, and then the startup script that generates the `nginx.conf` file will create entries allowing the paths that you specify to get through.  The only caveat is that health checks *cannot* reuse the same port.  If the health checker is accessing your application through an OpenShift Service or Routes, you will need to expose both ports.  The service behind the proxy can continue to use the same port and can remain agnostic about the ports mTLS is using.
 
@@ -154,12 +154,12 @@ If you want to customize the behavior of MeTaLS, or if you need finer grained co
 | `METALS_FORWARD_PORT`        | No       | `8080`             | If your application doesn't listen on `8080`, set this to the correct port for your application. |
 | `METALS_PROXY_PASS_HOST`     | No       | `127.0.0.1`        | set to hostname of backend service |
 | `METALS_PROXY_PASS_PROTOCOL` | No       | `http`             | set to `http` or `https` |
-| `METALS_SSL_SESSION_TIMEOUT` | No       | `6m`               | will be passed to nginx as `ssl_session_timeout` |
-| `METALS_SSL_PROTOCOLS`       | No       | `TLSv1.2 TLSv1.3`  | Versions of TLS that MeTaLS will allow clients to use.  (will be passed to nginx as `ssl_protocols`) |
-| `METALS_SSL_CIPHERS`         | No       | `HIGH:!aNULL:!MD5` | Defaults to `HIGH:!aNULL:!MD5`.  (will be passed to nginx as `ssl_ciphers` |
-| `METALS_SSL_VERIFY_DEPTH`    | No       | `7`                | will be passed to nginx as `ssl_verify_depth`.  If you have long trust chains, you may need to increase this |
-| `METALS_SSL`                 | No       | `on`               | **WARNING: If you set this to `"off"` TLS will be completely disabled, meaning all traffic is plain text!**<br>Defaults to `"on"`.  Disabling SSL can be very useful for debugging, but don't forget to re-enable it before deploying |
-| `METALS_SSL_VERIFY_CLIENT`   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
+| `METALS_TLS_SESSION_TIMEOUT` | No       | `6m`               | will be passed to nginx as `ssl_session_timeout` |
+| `METALS_TLS_PROTOCOLS`       | No       | `TLSv1.2 TLSv1.3`  | Versions of TLS that MeTaLS will allow clients to use.  (will be passed to nginx as `ssl_protocols`) |
+| `METALS_TLS_CIPHERS`         | No       | `HIGH:!aNULL:!MD5` | Defaults to `HIGH:!aNULL:!MD5`.  (will be passed to nginx as `ssl_ciphers` |
+| `METALS_TLS_VERIFY_DEPTH`    | No       | `7`                | will be passed to nginx as `ssl_verify_depth`.  If you have long trust chains, you may need to increase this |
+| `METALS_TLS_ENABLED`                 | No       | `on`               | **WARNING: If you set this to `"off"` TLS will be completely disabled, meaning all traffic is plain text!**<br>Defaults to `"on"`.  Disabling SSL can be very useful for debugging, but don't forget to re-enable it before deploying |
+| `METALS_TLS_VERIFY_CLIENT`   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
 | `METALS_SLEEP_ON_FATAL`      | No       | `""`               | Setting this to an integer value will cause the container to sleep for this many seconds after encountering a fatal error.  This is useful for keeping a pod alive while you inspect logs to determine what went wrong |
 
 #### Skipping Client Auth for certain paths (such as Health Checks)
@@ -204,8 +204,8 @@ And tell MeTaLS where you put your key and/or certificates:
 | `METALS_VAULT_PATH`:             | Yes      | Path to the secret that contains the key and/or certs.  [If you use different vault paths](#If-you-use-different-Vault-paths-for-some-secrets) for some secrets, see [below](#If-you-use-different-Vault-paths-for-some-secrets).  Example: secret/data/metals |
 | `METALS_PRIVATE_KEY_VAULT_KEY`:  | Yes      | Vault key where the service's private key is stored.  Example:  "private_key" |
 | `METALS_PUBLIC_CERT_VAULT_KEY`:  | Yes      | Vault key where the service's public cert is stored.  Example:  "public_cert" |
-| `METALS_SERVER_CHAIN_VAULT_KEY`: | Yes      | Vault key where the server's trust chain is stored.  Example:  "server_chain" |
-| `METALS_CLIENT_CHAIN_VAULT_KEY`: | Yes      | Vault key where the client's trust chain is stored.  Example:  "client_chain" |
+| `METALS_SERVER_TRUST_CHAIN_VAULT_KEY`: | Yes      | Vault key where the server's trust chain is stored.  Example:  "server_chain" |
+| `METALS_CLIENT_TRUST_CHAIN_VAULT_KEY`: | Yes      | Vault key where the client's trust chain is stored.  Example:  "client_chain" |
 
 
 ##### If you use different Vault paths for some secrets
@@ -216,8 +216,8 @@ If you use different Vault paths for some of the secrets, you can specify them i
 |-----------------------------------|----------|-------------|
 | `METALS_PRIVATE_KEY_VAULT_PATH`:  | No       | Vault key where the service's private key is stored.  Example:  secret/data/metals/key |
 | `METALS_PUBLIC_CERT_VAULT_PATH`:  | No       | Vault key where the service's public cert is stored.  Example:  secret/data/metals/cert |
-| `METALS_SERVER_CHAIN_VAULT_PATH`: | No       | Vault key where the server's trust chain is stored.  Example:  secret/data/metals/server_chain |
-| `METALS_CLIENT_CHAIN_VAULT_PATH`: | No       | Vault key where the client's trust chain is stored.  Example:  secret/data/metals/client_chain |
+| `METALS_SERVER_TRUST_CHAIN_VAULT_PATH`: | No       | Vault key where the server's trust chain is stored.  Example:  secret/data/metals/server_chain |
+| `METALS_CLIENT_TRUST_CHAIN_VAULT_PATH`: | No       | Vault key where the client's trust chain is stored.  Example:  secret/data/metals/client_chain |
 
 
 ### Pre-Built Images
@@ -238,7 +238,6 @@ For more information on PID 1 and containers (so you can understand why I used a
 * Quay:  [quay.io/freedomben/metals-nginx-114:latest](https://quay.io/repository/freedomben/metals-nginx-114)
 * Quay:  [quay.io/freedomben/metals-nginx-116:latest](https://quay.io/repository/freedomben/metals-nginx-116)
 * Quay:  [quay.io/freedomben/metals-nginx-117:latest](https://quay.io/repository/freedomben/metals-nginx-117)
-
 * Docker hub:  [docker.io/freedomben/metals-nginx-114:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-114)
 * Docker hub:  [docker.io/freedomben/metals-nginx-116:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-116)
 * Docker hub:  [docker.io/freedomben/metals-nginx-117:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-117)
@@ -359,15 +358,15 @@ items:
       app: metals-example
     name: metals-example-settings
   data:
-    METALS_SSL_CERTIFICATE: |
+    METALS_PUBLIC_CERT: |
       -----BEGIN CERTIFICATE-----
       ...
       -----END CERTIFICATE-----
-    METALS_SSL_CLIENT_CERTIFICATE: &rootca |
+    METALS_CLIENT_TRUST_CHAIN: &rootca |
       -----BEGIN CERTIFICATE-----
       ...
       -----END CERTIFICATE-----
-    METALS_SSL_TRUSTED_CERTIFICATE: *rootca
+    METALS_SERVER_TRUST_CHAIN: *rootca
 - apiVersion: v1
   kind: Secret
   metadata:
@@ -376,7 +375,7 @@ items:
     name: metals-example-private-key
   type: Opaque
   stringData:
-    METALS_SSL_CERTIFICATE_KEY: |
+    METALS_PRIVATE_KEY: |
       -----BEGIN RSA PRIVATE KEY-----
       ...
       -----END RSA PRIVATE KEY-----
@@ -514,7 +513,7 @@ items:
     name: metals-example-settings
   data:
     METALS_HEALTH_CHECK_PATH: "/health"  # This will bypass client auth in MeTaLS for /health
-    METALS_SSL_CERTIFICATE: |
+    METALS_PUBLIC_CERT: |
       ...
 ```
 
