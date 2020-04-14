@@ -470,8 +470,8 @@ nginx_server_block ()
         ssl_ciphers  ${METALS_TLS_CIPHERS:-"HIGH:!aNULL:!MD5"};
         ssl_prefer_server_ciphers   on;
 
-        #resolver 127.0.0.11 valid=30s;
-        resolver $(awk '/^nameserver/{print $2}' /etc/resolv.conf | tr '\n' ' ') valid=30s;
+        #resolver $(awk '/^nameserver/{print $2}' /etc/resolv.conf | tr '\n' ' ') valid=30s;
+        resolver 127.0.0.11 valid=30s;
 EOF
 }
 
