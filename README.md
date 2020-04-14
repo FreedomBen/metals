@@ -222,18 +222,28 @@ If you use different Vault paths for some of the secrets, you can specify them i
 
 ### Pre-Built Images
 
-There are pre-built images available on quay.io and Docker Hub.  The default images use [dumb-init](https://github.com/Yelp/dumb-init) as PID 1, but if you prefer [tini](https://github.com/krallin/tini) there is an image available built on tini.  The only difference between the dumb-init and tini images are the PID 1.
+There are pre-built images available on quay.io and Docker Hub.  The main images use [dumb-init](https://github.com/Yelp/dumb-init) as PID 1, but if you prefer [tini](https://github.com/krallin/tini) for other reasons (policy or superstition), there is an image available for you.  The tini image is only available with nginx 1.16 but is otherwise identical (besides the PID 1).
 
-For more information on PID 1 and containers, The [OpenShift Image Guidelines](https://docs.openshift.com/enterprise/3.0/creating_images/guidelines.html) are helpful.  There is a good blog post [Docker and the PID 1 zombie reaping problem](http://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/), as well as [Demystifying the init system (PID 1)](https://felipec.wordpress.com/2013/11/04/init/).
+For more information on PID 1 and containers (so you can understand why I used an init process), The [OpenShift Image Guidelines](https://docs.openshift.com/enterprise/3.0/creating_images/guidelines.html) are helpful.  There is a good blog post [Docker and the PID 1 zombie reaping problem](http://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/), as well as [Demystifying the init system (PID 1)](https://felipec.wordpress.com/2013/11/04/init/).
 
 #### [dumb-init](https://github.com/Yelp/dumb-init) based images:
 
-* Quay:  [quay.io/freedomben/metals:latest](https://quay.io/repository/freedomben/metals)
-* Quay:  [quay.io/freedomben/metals-dumb-init:latest](https://quay.io/repository/freedomben/metals-dumb-init) (Identical to above, just explicitly contains "dumb-init" in the image name)
-* Docker hub:  [docker.io/freedomben/metals:latest](https://hub.docker.com/repository/docker/freedomben/metals)
-* Docker hub:  [docker.io/freedomben/metals-dumb-init:latest](https://hub.docker.com/repository/docker/freedomben/metals-dumb-init) (Identical to above, just explicitly contains "dumb-init" in the image name)
+##### Default (currently nginx 1.16. Will track nginx stable release)
 
-#### [tini](https://github.com/krallin/tini) based images:
+* Quay:  [quay.io/freedomben/metals:latest](https://quay.io/repository/freedomben/metals)
+* Docker hub:  [docker.io/freedomben/metals:latest](https://hub.docker.com/repository/docker/freedomben/metals)
+
+##### Specific nginx versions available
+
+* Quay:  [quay.io/freedomben/metals-nginx-114:latest](https://quay.io/repository/freedomben/metals-nginx-114)
+* Quay:  [quay.io/freedomben/metals-nginx-116:latest](https://quay.io/repository/freedomben/metals-nginx-116)
+* Quay:  [quay.io/freedomben/metals-nginx-117:latest](https://quay.io/repository/freedomben/metals-nginx-117)
+
+* Docker hub:  [docker.io/freedomben/metals-nginx-114:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-114)
+* Docker hub:  [docker.io/freedomben/metals-nginx-116:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-116)
+* Docker hub:  [docker.io/freedomben/metals-nginx-117:latest](https://hub.docker.com/repository/docker/freedomben/metals-nginx-117)
+
+#### [tini](https://github.com/krallin/tini) based images (currently nginx 1.16. Will track nginx stable release):
 
 * Quay:  [quay.io/freedomben/metals-tini:latest](https://quay.io/repository/freedomben/metals-tini)
 * Docker hub:  [docker.io/freedomben/metals-tini:latest](https://hub.docker.com/repository/docker/freedomben/metals-tini)
