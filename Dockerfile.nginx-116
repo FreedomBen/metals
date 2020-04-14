@@ -1,7 +1,7 @@
 FROM docker.io/fedora:31
 
 ENV NGINX_VERSION 1.16
-ENV METALS_VERSION 0.3.0
+ENV METALS_VERSION 0.3.1
 
 LABEL io.k8s.description="MeTaLS: a drop-in mTLS solution" \
   io.k8s.display-name="MeTaLS v${METALS_VERSION}" \
