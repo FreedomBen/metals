@@ -17,17 +17,16 @@ RUN apt-get update -y \
     wget \
     procps \
     jq \
- && apt-get clean all -y \
-
-# We need to be able to write the nginx config file
-RUN chmod g+rwx /etc/nginx/conf.d
+ && apt-get clean all -y
 
 # Install dumb-init
 RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 \
  && chmod +x /usr/local/bin/dumb-init
 
+# We need to be able to write the nginx config file
 # In OpenShift our user ID will be random and not root,
-RUN mkdir -p /mtls/default-certificates /var/run/ssl \
+RUN chmod g+rwx /etc /etc/nginx /etc/nginx/conf.d \
+ && mkdir -p /mtls/default-certificates /var/run/ssl \
  && chgrp -R 0 /mtls /var/run/ssl \
  && chmod -R g+rwX /mtls /var/run/ssl \
  && chmod g+rwX /var /var/log /var/run

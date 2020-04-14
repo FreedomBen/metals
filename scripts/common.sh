@@ -11,7 +11,7 @@ export DEFAULT_DOCKERFILE='Dockerfile.nginx-116'
 export DEFAULT_RELEASE='116'
 
 export VAULT_IMAGE='docker.io/vault:1.3.2'
-export METALS_IMAGE='docker.io/freedomben/metals-nginx-116:latest'
+export METALS_IMAGE='docker.io/freedomben/metals:latest'
 export METALS_EXAMPLE_IMAGE="docker.io/freedomben/metals-example"
 
 export METALS_CONTAINER='metals'
