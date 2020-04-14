@@ -79,6 +79,19 @@ parse_short_version ()
   echo "$1" | sed -E -e 's/\.[0-9]$//g'
 }
 
+pull_image ()
+{
+  echo -e "\033[1;36mPulling image '${from_image}'\033[0m"
+  $PODMAN pull "${1}"
+}
+
+pull_base_image ()
+{
+  local from_image
+  from_image="$(head -1 "Dockerfile.${1}" | awk '{ print $2 }')"
+  pull_image "${from_image}"
+}
+
 build_dockerfile ()
 {
   echo -e "\033[1;36mBuilding 'Dockerfile.${1}' for version '${2}', short version '${3}'\033[0m"
@@ -90,6 +103,12 @@ build_dockerfile ()
     -t "docker.io/freedomben/metals-${1}:${3}" \
     -f "Dockerfile.${1}" \
     .
+}
+
+pull_and_build_dockerfile ()
+{
+  pull_base_image "${@}"
+  build_dockerfile "${@}"
 }
 
 push_image ()

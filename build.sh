@@ -11,10 +11,10 @@ main ()
   current_version="$(check_extract_version)"
   short_version="$(parse_short_version "$current_version")"
 
-  build_dockerfile "nginx-116" "$current_version" "$short_version"
-  build_dockerfile "nginx-114" "$current_version" "$short_version"
-  build_dockerfile "nginx-117" "$current_version" "$short_version"
-  build_dockerfile "tini" "$current_version" "$short_version"
+  pull_and_build_dockerfile "nginx-116" "$current_version" "$short_version"
+  pull_and_build_dockerfile "nginx-114" "$current_version" "$short_version"
+  pull_and_build_dockerfile "nginx-117" "$current_version" "$short_version"
+  pull_and_build_dockerfile "tini" "$current_version" "$short_version"
 
   echo -e "\033[1;36mTagging 'metals-nginx-${DEFAULT_RELEASE}' as metals'"
 
