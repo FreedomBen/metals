@@ -426,7 +426,7 @@ build_nginx_health_check_location_blocks ()
   for location in $METALS_SKIP_CLIENT_AUTH_PATH $METALS_SKIP_CLIENT_AUTH_PATH_0 $METALS_SKIP_CLIENT_AUTH_PATH_1 $METALS_SKIP_CLIENT_AUTH_PATH_2 $METALS_SKIP_CLIENT_AUTH_PATH_3 $METALS_HEALTH_CHECK_PATH $METALS_HEALTH_CHECK_PATH_0 $METALS_HEALTH_CHECK_PATH_1 $METALS_HEALTH_CHECK_PATH_2 $METALS_HEALTH_CHECK_PATH_3
   do
     nginx_health_check_location_blocks_text+=("
-        location ${location} {
+        location ~ ${location} {
           $(nginx_location_block)
         }
     ")
