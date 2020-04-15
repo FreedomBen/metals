@@ -23,12 +23,17 @@ main ()
       | sort \
       | uniq
     )
-        do
-          echo "Updating file '$f'"
-          sed -i -E -e \
-            "s/METALS_VERSION\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/METALS_VERSION ${new_version}/g" \
-            "$f"
-        done
+    do
+      echo "Updating file '$f'"
+      sed -i -E -e \
+        "s/METALS_VERSION\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/METALS_VERSION ${new_version}/g" \
+        "$f"
+    done
+
+    echo "Updating file 'README.md'"
+    sed -i -E -e \
+      "s|img\.shields\.io/badge/Version-v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|img.shields.io/badge/Version-v${new_version}|g" \
+      README.md
   fi
 }
 
