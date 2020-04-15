@@ -207,8 +207,8 @@ start_metals ()
     $det_or_it \
     --user 12345 \
     \
-    --env METALS_TLS_ENABLED=on \
-    --env METALS_TLS_VERIFY_CLIENT=on \
+    --env "METALS_TLS_ENABLED=${2:-on}" \
+    --env "METALS_TLS_VERIFY_CLIENT=${3:-on}" \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
     \
@@ -232,6 +232,9 @@ start_metals ()
 
 start_metals_vault ()
 {
+  # $1 is CMD to run
+  # $2 is TLS enabled
+  # $3 is client verify enabled
   local det_or_it
   if [ -n "$1" ]; then
     det_or_it='-it'
@@ -247,8 +250,8 @@ start_metals_vault ()
     $det_or_it \
     --user 12345 \
     \
-    --env METALS_TLS_ENABLED=on \
-    --env METALS_TLS_VERIFY_CLIENT=on \
+    --env "METALS_TLS_ENABLED=${2:-on}" \
+    --env "METALS_TLS_VERIFY_CLIENT=${3:-on}" \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
     \
@@ -500,42 +503,42 @@ remove_pod ()
 
 client_request ()
 {
-  echo "Kicking off client request with valid client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off client request with valid client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     --key ./$CLIENT_KEY_FILE \
     --cert ./$CLIENT_CERT_FILE \
-    https://$TARGET_HOST/testing/mtls/long/path?querystring=thisvalue
+    "${2:-https}://$TARGET_HOST/testing/mtls/long/path?querystring=thisvalue"
 }
 
 badauth_client_request ()
 {
   # Has certs but they aren't authorized
-  echo "Kicking off client request with BAD client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off client request with BAD client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     --key ./$UNTRUSTED_CERT_DIR/client.key \
     --cert ./$UNTRUSTED_CERT_DIR/client.crt \
-    https://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue
+    "${2:-https}://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue"
 }
 
 health_client_request ()
 {
-  echo "Kicking off health check client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off health check client request with NO client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
     --cacert ./$TRUST_CHAIN_FILE \
-    https://$HEALTH_CHECK_TARGET_HOST/health?Healthy=1
+    "${2:-https}://$HEALTH_CHECK_TARGET_HOST/health?Healthy=1"
 }
 
 plaintext_request ()
 {
-  echo "Kicking off http client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off http client request with NO client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
@@ -545,17 +548,17 @@ plaintext_request ()
 
 unauthed_client_request ()
 {
-  echo "Kicking off client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off client request with NO client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
     --cacert ./$TRUST_CHAIN_FILE \
-    https://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue
+    "${2:-https}://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue"
 }
 
 header_client_request ()
 {
-  echo "Kicking off client request with extra headers and valid client cert to TARGET_HOST '$TARGET_HOST'"
+  echo -e "${color_light_cyan}Kicking off client request with extra headers and valid client cert to TARGET_HOST '$TARGET_HOST'${color_restore}"
   # shellcheck disable=SC2086
   curl $1 \
     --silent \
@@ -564,11 +567,12 @@ header_client_request ()
     --cert ./$CLIENT_CERT_FILE \
     -H 'X-Client-Dn: hacked.xyz' \
     -H 'X-Hello-World: word' \
-    https://$TARGET_HOST/testing/mtls/long/path?querystring=thisvalue
+    "${2:-https}://$TARGET_HOST/testing/mtls/long/path?querystring=thisvalue"
 }
 
 full_stop ()
 {
+  echo -e "Stopping containers (cleanup)"
   stop_metals
   stop_metals_example
   stop_vault
@@ -582,93 +586,183 @@ print_pass ()
 
 print_fail ()
 {
-  full_stop
   echo -e "${color_light_red}FAILED${color_restore} - MeTaLS response:\n\n$1"
+  full_stop
   exit 1
 }
 
-test_nginx ()
+check_test_result ()
 {
+  # $1 is dockerfile_suffix, $2 is name, $3 is response, $4 is grep regex
+  echo -e "${color_light_cyan}Test result for $2 to ${1}${color_restore}"
+  if echo "$3" | grep -E "$4" >/dev/null 2>&1; then
+    print_pass
+  else
+    print_fail "$3"
+  fi
+}
+
+# mTLS enabled (client verify enabled)
+run_mtls_requests ()
+{
+  # $1 is dockerfile_suffix, $2 is name, $3 is response, $4 is grep regex
+  check_test_result \
+    "${1}" \
+    "mTLS client request" \
+    "$(client_request '')" \
+    'GET\s.testing.mtls.long.path.*querystring.*thisvalue'
+
+  check_test_result \
+    "${1}" \
+    "mTLS bad authed client request" \
+    "$(badauth_client_request '')" \
+    '400 The SSL certificate error'
+
+  check_test_result \
+    "${1}" \
+    "mTLS health check client request" \
+    "$(health_client_request '')" \
+    '^Healthy$'
+
+  check_test_result \
+    "${1}" \
+    "mTLS unauthenticated client request" \
+    "$(unauthed_client_request '')" \
+    '400 No required SSL certificate was sent'
+}
+
+# TLS enabled but client verify disabled
+run_tls_requests ()
+{
+  # $1 is dockerfile_suffix, $2 is name, $3 is response, $4 is grep regex
+  check_test_result \
+    "${1}" \
+    "TLS client request" \
+    "$(client_request '')" \
+    'GET\s.testing.mtls.long.path.*querystring.*thisvalue'
+
+  check_test_result \
+    "${1}" \
+    "TLS bad authed client request" \
+    "$(badauth_client_request '')" \
+    'GET\s.testing.mtls.long.path.*querystring.*thisvalue'
+
+  check_test_result \
+    "${1}" \
+    "TLS health check client request" \
+    "$(health_client_request '')" \
+    '^Healthy$'
+
+  check_test_result \
+    "${1}" \
+    "TLS unauthenticated client request" \
+    "$(unauthed_client_request '')" \
+    'GET\s.testing.mtls.long.path.*querystring.*thisvalue'
+}
+
+# TLS disabled entirely
+run_no_tls_requests ()
+{
+  # $1 is dockerfile_suffix, $2 is name, $3 is response, $4 is grep regex
+  check_test_result \
+    "${1}" \
+    "No TLS client request" \
+    "$(plaintext_request '')" \
+    'GET\s.testing.mtls.long.path.*querystring.*thisvalue'
+}
+
+get_dockerfile_suffix ()
+{
+  if [ "$1" = "tini" ]; then
+    echo "tini"
+  else
+    echo "nginx-${1}"
+  fi
+}
+
+start_metals_test_env ()
+{
+  # $1 - nginx ver "116", $2 - "vault", $3 - tls enabled 'on', $4 - client verify enabled 'on'
   full_stop
   set -e
 
   local cur_ver
   local short_ver
   local dockerfile_suffix
-  if [ "$1" = "tini" ]; then
-    dockerfile_suffix="tini"
-  else
-    dockerfile_suffix="nginx-${1}"
-  fi
+  dockerfile_suffix="$(get_dockerfile_suffix "$1")"
   cur_ver="$(extract_version "Dockerfile.${dockerfile_suffix}")"
   short_ver="$(parse_short_version "${cur_ver}")"
 
   pull_and_build_dockerfile "$dockerfile_suffix" "$cur_ver" "$short_ver"
 
   # tag as metals:latest so it gets started by later functions
-  echo -e "${color_light_cyan}Tagging metals-${dockerfile_suffix}:${cur_ver} as metals:latest"
+  echo -e "${color_light_cyan}Tagging metals-${dockerfile_suffix}:${cur_ver} as metals:latest${color_restore}"
   $PODMAN tag \
     "docker.io/freedomben/metals-${dockerfile_suffix}:${cur_ver}" \
     "docker.io/freedomben/metals:latest"
   $PODMAN tag \
     "quay.io/freedomben/metals-${dockerfile_suffix}:${cur_ver}" \
     "quay.io/freedomben/metals:latest"
-  echo -e "Tagging done."
+  echo -e "${color_light_cyan}Tagging done.${color_restore}"
 
   create_pod
   start_metals_example
+
   if [ "$2" = "vault" ];then 
-    start_metals_vault ""
+    start_vault
+    echo -e "${color_light_cyan}Waiting 5 seconds for Vault to start${color_restore}"
     sleep 5
+    echo -e "${color_light_cyan}Writing keys/certs to Vault${color_restore}"
     write_keys_to_vault_same_path
     write_keys_to_vault_different_path
+    echo -e "${color_light_cyan}Starting Metals in Vault mode${color_restore}"
+    start_metals_vault '' "$3" "$4"
   else
-    start_metals
+    start_metals '' "$3" "$4"
   fi
 
   # Give metals time to start
   echo "Waiting 5 seconds for MeTaLS to start..."
   sleep 5
+  set +e
+}
 
-  local response
-  response="$(client_request "-v")"
+test_nginx ()
+{
+  local dockerfile_suffix
+  dockerfile_suffix="$(get_dockerfile_suffix "$1")"
+  test_nginx_full_mtls "$1" "$dockerfile_suffix"
+  test_nginx_reg_tls "$1" "$dockerfile_suffix"
+  test_nginx_no_tls "$1" "$dockerfile_suffix"
+}
 
-  echo -e "${color_light_cyan}Test result for client request to $dockerfile_suffix${color_restore}"
-  if echo "$response" | grep -E 'GET\s.testing.mtls.long.path.*querystring.*thisvalue' >/dev/null 2>&1; then
-    print_pass
-  else
-    print_fail "$response"
-  fi
+test_nginx_full_mtls ()
+{
+  # No vault, full mTLS
+  echo -e "${color_light_cyan}Starting test env for Full mTLS (no vault), nginx v${1}${color_restore}"
+  start_metals_test_env "$1" '' 'on' 'on'
+  echo -e "${color_light_cyan}Testing Full mTLS (no vault), nginx v${1}${color_restore}"
+  run_mtls_requests "$2"
+  full_stop || true
+}
 
-  response="$(badauth_client_request "")"
+test_nginx_reg_tls ()
+{
+  # Regular TLS, with vault
+  echo -e "${color_light_cyan}Starting test env for regular TLS (with vault), nginx v${1}${color_restore}"
+  start_metals_test_env "$1" "vault" "on" "off"
+  echo -e "${color_light_cyan}Testing regular TLS (with vault), nginx v${1}${color_restore}"
+  run_tls_requests "$2"
+  full_stop || true
+}
 
-  echo -e "${color_light_cyan}Test result for bad authed (unauthed cert) client request to $dockerfile_suffix${color_restore}"
-  if echo "$response" | grep -E '400 The SSL certificate error' >/dev/null 2>&1; then
-    print_pass
-  else
-    print_fail "$response"
-  fi
-
-  response="$(health_client_request "")"
-
-  echo -e "${color_light_cyan}Test result for health check client request to $dockerfile_suffix${color_restore}"
-  if echo "$response" | grep -E '^Healthy$' >/dev/null 2>&1; then
-    print_pass
-  else
-    print_fail "$response"
-  fi
-
-  response="$(unauthed_client_request "")"
-
-  echo -e "${color_light_cyan}Test result for unauthenticated client request to $dockerfile_suffix${color_restore}"
-  if echo "$response" | grep -E '400 No required SSL certificate was sent' >/dev/null 2>&1; then
-    print_pass
-  else
-    print_fail "$response"
-  fi
-
-  # If we made it here the tests all passed.
-  # Return true no matter what so CI knows we're all good
+test_nginx_no_tls ()
+{
+  # No TLS, with vault
+  echo -e "${color_light_cyan}Starting test env for No TLS (with no vault), nginx v${1}${color_restore}"
+  start_metals_test_env "$1" "" "off" "off"
+  echo -e "${color_light_cyan}Testing No TLS (with vault), nginx v${1}${color_restore}"
+  run_no_tls_requests "$2"
   full_stop || true
 }
 
@@ -677,19 +771,9 @@ test_nginx_114 ()
   test_nginx "114"
 }
 
-test_nginx_vault_114 ()
-{
-  test_nginx_vault "114"
-}
-
 test_nginx_115 ()
 {
   test_nginx "115"
-}
-
-test_nginx_vault_114 ()
-{
-  test_nginx_vault "114"
 }
 
 test_nginx_116 ()
@@ -697,19 +781,9 @@ test_nginx_116 ()
   test_nginx "116"
 }
 
-test_nginx_vault_116 ()
-{
-  test_nginx_vault "116"
-}
-
 test_nginx_117 ()
 {
   test_nginx "117"
-}
-
-test_nginx_vault_116 ()
-{
-  test_nginx_vault "116"
 }
 
 test_nginx_tini ()
@@ -717,15 +791,9 @@ test_nginx_tini ()
   test_nginx "tini"
 }
 
-test_nginx_vault_tini ()
-{
-  test_nginx_vault "tini"
-}
-
 test_nginx_all ()
 {
   for vers in 114 116 117 tini; do
     test_nginx "$vers"
-    test_nginx_vault "$vers"
   done
 }
