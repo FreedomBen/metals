@@ -11,8 +11,8 @@ fi
 
 main ()
 {
-  #unauthed_client_request "-v"
-  unauthed_client_request ""
+  unauthed_client_request "-v"
+  #unauthed_client_request ""
 }
 
 main "$@"

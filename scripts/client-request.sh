@@ -11,8 +11,8 @@ fi
 
 main ()
 {
-  #client_request "-v"
-  client_request ""
+  client_request "-v"
+  #client_request ""
 }
 
 main "$@"

@@ -107,8 +107,10 @@ build_dockerfile ()
   $PODMAN build \
     -t "quay.io/freedomben/metals-${1}:${2}" \
     -t "quay.io/freedomben/metals-${1}:${3}" \
+    -t "quay.io/freedomben/metals-${1}:latest" \
     -t "docker.io/freedomben/metals-${1}:${2}" \
     -t "docker.io/freedomben/metals-${1}:${3}" \
+    -t "docker.io/freedomben/metals-${1}:latest" \
     -f "Dockerfile.${1}" \
     .
 }
@@ -604,10 +606,14 @@ test_nginx ()
   pull_and_build_dockerfile "$dockerfile_suffix" "$cur_ver" "$short_ver"
 
   # tag as metals:latest so it gets started by later functions
-  echo -e "${color_light_cyan}Tagging metals-${dockerfile_suffix} as metals:latest"
+  echo -e "${color_light_cyan}Tagging metals-${dockerfile_suffix}:${cur_ver} as metals:latest"
   $PODMAN tag \
-    "docker.io/freedomben/metals-${dockerfile_suffix}:latest" \
+    "docker.io/freedomben/metals-${dockerfile_suffix}:${cur_ver}" \
     "docker.io/freedomben/metals:latest"
+  $PODMAN tag \
+    "quay.io/freedomben/metals-${dockerfile_suffix}:${cur_ver}" \
+    "quay.io/freedomben/metals:latest"
+  echo -e "Tagging done."
 
   create_pod
   start_metals_example

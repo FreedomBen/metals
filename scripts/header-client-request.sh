@@ -11,8 +11,8 @@ fi
 
 main ()
 {
-  #header_client_request "-v"
-  header_client_request ""
+  header_client_request "-v"
+  #header_client_request ""
 }
 
 main "$@"

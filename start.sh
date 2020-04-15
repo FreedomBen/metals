@@ -5,6 +5,9 @@
 set -e
 set -o pipefail
 
+declare -r NGINX_ACCESS_LOG_FILE="/var/log/nginx/access.log"
+declare -r NGINX_ERROR_LOG_FILE="/var/log/nginx/error.log"
+
 # Array needs to be a global variable so functions can add to it
 declare -a nginx_health_check_location_blocks_text=()
 
@@ -595,14 +598,21 @@ sanity_check_cert_files ()
 
 symlink_log_files ()
 {
+  # If files are already symlinked (like in nginx official docker image)
+  # Remove them because of the nginx permission issue (selinux related)
+  #if [ -h "${NGINX_ACCESS_LOG_FILE}" ]; then
+  #  rm "${NGINX_ACCESS_LOG_FILE}"
+  #  rm "${NGINX_ERROR_LOG_FILE}"
+  #fi
+
   # Create the log files if they don't exist
-  touch /var/log/nginx/access.log
-  touch /var/log/nginx/error.log
+  touch "${NGINX_ACCESS_LOG_FILE}"
+  touch "${NGINX_ERROR_LOG_FILE}"
 
   # Until we get the permission issue with nginx opening
   # stdout and stderr as non-root user, no point in symlinking
-  #ln -sf /dev/stdout /var/log/nginx/access.log
-  #ln -sf /dev/stderr /var/log/nginx/error.log
+  #ln -sf /dev/stdout "${NGINX_ACCESS_LOG_FILE}"
+  #ln -sf /dev/stderr "${NGINX_ERROR_LOG_FILE}"
 }
 
 start_nginx ()
