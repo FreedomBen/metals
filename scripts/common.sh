@@ -593,12 +593,18 @@ print_fail ()
 
 check_test_result ()
 {
-  # $1 is dockerfile_suffix, $2 is name, $3 is response, $4 is grep regex
-  echo -e "${color_light_cyan}Test result for $2 to ${1}${color_restore}"
+  # $1 is dockerfile_suffix
+  # $2 is name
+  # $3 is response
+  # $4 is grep regex
+  # $5 is a log file
+
+  echo -e "${color_light_cyan}Test result for $2 to ${1}${color_restore}" \
+    | tee -a "${5:-test-results.log}"
   if echo "$3" | grep -E "$4" >/dev/null 2>&1; then
-    print_pass
+    print_pass | tee -a "${5:-test-results.log}"
   else
-    print_fail "$3"
+    print_fail "$3" | tee -a "${5:-test-results.log}"
   fi
 }
 
