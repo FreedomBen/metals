@@ -11,8 +11,7 @@ fi
 
 main ()
 {
-  #unauthed_client_request "-v"
-  unauthed_client_request ""
+  test_nginx_tini
 }
 
 main "$@"

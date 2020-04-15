@@ -1,6 +1,11 @@
 # shellcheck disable=SC2155
 
 # This file should be sourced from the others
+export color_light_green='\033[1;32m'
+export color_light_red='\033[1;31m'
+export color_light_cyan='\033[1;36m'
+export color_cyan='\033[0;36m'
+export color_restore='\033[0m'
 
 export PODMAN=
 #PODMAN="sudo $(command -v podman) --authfile ~/.docker/config.json"
@@ -56,7 +61,10 @@ export TRUST_CHAIN_FILE="$CERT_DIR/rootca.crt"
 # Building an pushing functions
 extract_version ()
 {
-  awk '/^ENV METALS_VERSION/ { print $3 }' "$1"
+  # Make default arg for first
+  local filename="${DEFAULT_DOCKERFILE}"
+  [ -n "$1" ] && filename="$1"
+  awk '/^ENV METALS_VERSION/ { print $3 }' "${filename}"
 }
 
 check_extract_version ()
@@ -491,7 +499,9 @@ remove_pod ()
 client_request ()
 {
   echo "Kicking off client request with valid client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     --key ./$CLIENT_KEY_FILE \
     --cert ./$CLIENT_CERT_FILE \
@@ -502,7 +512,9 @@ badauth_client_request ()
 {
   # Has certs but they aren't authorized
   echo "Kicking off client request with BAD client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     --key ./$UNTRUSTED_CERT_DIR/client.key \
     --cert ./$UNTRUSTED_CERT_DIR/client.crt \
@@ -512,7 +524,9 @@ badauth_client_request ()
 health_client_request ()
 {
   echo "Kicking off health check client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     https://$HEALTH_CHECK_TARGET_HOST/health?Healthy=1
 }
@@ -520,7 +534,9 @@ health_client_request ()
 plaintext_request ()
 {
   echo "Kicking off http client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --insecure \
     http://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue
 }
@@ -528,7 +544,9 @@ plaintext_request ()
 unauthed_client_request ()
 {
   echo "Kicking off client request with NO client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     https://${TARGET_HOST}/testing/mtls/long/path?querystring=thisvalue
 }
@@ -536,11 +554,172 @@ unauthed_client_request ()
 header_client_request ()
 {
   echo "Kicking off client request with extra headers and valid client cert to TARGET_HOST '$TARGET_HOST'"
-  curl -v \
+  # shellcheck disable=SC2086
+  curl $1 \
+    --silent \
     --cacert ./$TRUST_CHAIN_FILE \
     --key ./$CLIENT_KEY_FILE \
     --cert ./$CLIENT_CERT_FILE \
     -H 'X-Client-Dn: hacked.xyz' \
     -H 'X-Hello-World: word' \
     https://$TARGET_HOST/testing/mtls/long/path?querystring=thisvalue
+}
+
+full_stop ()
+{
+  stop_metals
+  stop_metals_example
+  stop_vault
+  remove_pod
+}
+
+print_pass ()
+{
+  echo -e "${color_light_green}PASSED${color_restore}"
+}
+
+print_fail ()
+{
+  full_stop
+  echo -e "${color_light_red}FAILED${color_restore} - MeTaLS response:\n\n$1"
+  exit 1
+}
+
+test_nginx ()
+{
+  full_stop
+  set -e
+
+  local cur_ver
+  local short_ver
+  local dockerfile_suffix
+  if [ "$1" = "tini" ]; then
+    dockerfile_suffix="tini"
+  else
+    dockerfile_suffix="nginx-${1}"
+  fi
+  cur_ver="$(extract_version "Dockerfile.${dockerfile_suffix}")"
+  short_ver="$(parse_short_version "${cur_ver}")"
+
+  pull_and_build_dockerfile "$dockerfile_suffix" "$cur_ver" "$short_ver"
+
+  # tag as metals:latest so it gets started by later functions
+  echo -e "${color_light_cyan}Tagging metals-${dockerfile_suffix} as metals:latest"
+  $PODMAN tag \
+    "docker.io/freedomben/metals-${dockerfile_suffix}:latest" \
+    "docker.io/freedomben/metals:latest"
+
+  create_pod
+  start_metals_example
+  if [ "$2" = "vault" ];then 
+    start_metals_vault ""
+    sleep 5
+    write_keys_to_vault_same_path
+    write_keys_to_vault_different_path
+  else
+    start_metals
+  fi
+
+  # Give metals time to start
+  echo "Waiting 5 seconds for MeTaLS to start..."
+  sleep 5
+
+  local response
+  response="$(client_request "-v")"
+
+  echo -e "${color_light_cyan}Test result for client request to $dockerfile_suffix${color_restore}"
+  if echo "$response" | grep -E 'GET\s.testing.mtls.long.path.*querystring.*thisvalue' >/dev/null 2>&1; then
+    print_pass
+  else
+    print_fail "$response"
+  fi
+
+  response="$(badauth_client_request "")"
+
+  echo -e "${color_light_cyan}Test result for bad authed (unauthed cert) client request to $dockerfile_suffix${color_restore}"
+  if echo "$response" | grep -E '400 The SSL certificate error' >/dev/null 2>&1; then
+    print_pass
+  else
+    print_fail "$response"
+  fi
+
+  response="$(health_client_request "")"
+
+  echo -e "${color_light_cyan}Test result for health check client request to $dockerfile_suffix${color_restore}"
+  if echo "$response" | grep -E '^Healthy$' >/dev/null 2>&1; then
+    print_pass
+  else
+    print_fail "$response"
+  fi
+
+  response="$(unauthed_client_request "")"
+
+  echo -e "${color_light_cyan}Test result for unauthenticated client request to $dockerfile_suffix${color_restore}"
+  if echo "$response" | grep -E '400 No required SSL certificate was sent' >/dev/null 2>&1; then
+    print_pass
+  else
+    print_fail "$response"
+  fi
+
+  # If we made it here the tests all passed.
+  # Return true no matter what so CI knows we're all good
+  full_stop || true
+}
+
+test_nginx_114 ()
+{
+  test_nginx "114"
+}
+
+test_nginx_vault_114 ()
+{
+  test_nginx_vault "114"
+}
+
+test_nginx_115 ()
+{
+  test_nginx "115"
+}
+
+test_nginx_vault_114 ()
+{
+  test_nginx_vault "114"
+}
+
+test_nginx_116 ()
+{
+  test_nginx "116"
+}
+
+test_nginx_vault_116 ()
+{
+  test_nginx_vault "116"
+}
+
+test_nginx_117 ()
+{
+  test_nginx "117"
+}
+
+test_nginx_vault_116 ()
+{
+  test_nginx_vault "116"
+}
+
+test_nginx_tini ()
+{
+  test_nginx "tini"
+}
+
+test_nginx_vault_tini ()
+{
+  test_nginx_vault "tini"
+}
+
+test_nginx_all ()
+{
+  for vers in 114 116 117 tini; do
+    test_nginx "$vers"
+    test_nginx_vault "$vers"
+  done
 }

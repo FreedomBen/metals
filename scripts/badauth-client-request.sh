@@ -11,7 +11,8 @@ fi
 
 main ()
 {
-  badauth_client_request
+  #badauth_client_request "-v"
+  badauth_client_request ""
 }
 
 main "$@"

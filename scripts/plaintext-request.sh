@@ -11,7 +11,8 @@ fi
 
 main ()
 {
-  plaintext_request
+  #plaintext_request "-v"
+  plaintext_request ""
 }
 
 main "$@"

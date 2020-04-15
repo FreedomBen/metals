@@ -11,7 +11,8 @@ fi
 
 main ()
 {
-  health_client_request
+  #health_client_request "-v"
+  health_client_request ""
 }
 
 main "$@"
