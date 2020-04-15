@@ -460,7 +460,7 @@ nginx_server_block ()
         listen       ${6:-"8443"} default_server;
         listen       [::]:${6:-"8443"} default_server;
         server_name  ${METALS_SERVER_NAME:-"_"};
-        root         /usr/share/nginx/html;
+        root         /usr/share/nginx;
         ssl                     ${METALS_TLS_ENABLED:-"on"};
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");
@@ -549,7 +549,7 @@ generate_nginx_config ()
   cat <<- EOF > "$nginx_config_file"
     # Health check server (no client auth required)
     server {
-      $(nginx_server_block "$1" "$2" "$3" "$4" "off" "${METALS_HEALTH_CHECK_LISTEN_PORT:-9443}")
+      $(nginx_server_block "$1" "$2" "$3" "$4" "off" "${METALS_SKIP_CLIENT_AUTH_LISTEN_PORT:-9443}")
 
       $(nginx_health_check_location_blocks)
     }
@@ -815,7 +815,7 @@ main ()
     "$ssl_trusted_certificate" \
     "$ssl_client_certificate" \
     "$METALS_TLS_VERIFY_CLIENT" \
-    "$METALS_HEALTH_CHECK_LISTEN_PORT" \
+    "$METALS_SKIP_CLIENT_AUTH_LISTEN_PORT" \
 
 #  generate_nginx_config_no_health_checks \
 #    "$ssl_certificate_key" \

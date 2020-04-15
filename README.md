@@ -170,10 +170,7 @@ If you need to allow certain paths through without client authentication, you ca
 |-----------------------------------------------|----------|-------------------------------|-------------|
 | `METALS_SKIP_CLIENT_AUTH_PATH`<br />`METALS_SKIP_CLIENT_AUTH_PATH_0`<br />`METALS_SKIP_CLIENT_AUTH_PATH_2`<br />`METALS_SKIP_CLIENT_AUTH_PATH_3`       | No       | `""`               | Setting this to a path will cause the container to proxy requests to this path to the backend *without performing client authentication*.  This is useful for health check endpoints for example, where the health checker (such as a Kubelet) does not have a valid certificate |
 | `METALS_SKIP_CLIENT_AUTH_LISTEN_PORT`         | No       | `""`               | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
-| `METALS_HEALTH_CHECK_PATH`<br />`METALS_HEALTH_CHECK_PATH_0`<br />`METALS_HEALTH_CHECK_PATH_1`<br />`METALS_HEALTH_CHECK_PATH_2`<br />`METALS_HEALTH_CHECK_PATH_3`     | No       | `""`               | Setting this to a path will cause the container to proxy requests to this path to the backend *without performing client authentication*.  This is useful for health check endpoints for example, where the health checker (such as a Kubelet) does not have a valid certificate |
-| `METALS_HEALTH_CHECK_LISTEN_PORT`             | No       | `9443`             | Optional port number to use for health check paths that skip client auth.  Defaults to 9443. |
 
-You may notice that `METALS_SKIP_CLIENT_AUTH_PATH` and `METALS_HEALTH_CHECK_PATH` do the same thing.  Good observation!  This is by design to allow you to choose the one with more semantic meaning for you.  I tried to choose self-documenting variable names that would describe their function.  If you are skipping client authentication for health check reasons, you may wish to choose the `METALS_HEALTH_CHECK_PATH` version as it's more self-documenting.  Ultimately however, the choice is up to you.
 
 #### Vault Integration
 
