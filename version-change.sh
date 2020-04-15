@@ -18,7 +18,13 @@ main ()
     local new_version
     new_version="$(echo "$1" | sed -E -e 's/^v//g')" # strip leading v
     for f in $(
-      grep -r -E 'METALS_VERSION\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' . \
+      grep \
+        --binary-files=without-match \
+        --directories=skip \
+        --extended-regexp \
+        --recursive \
+        'METALS_VERSION\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' \
+        . \
       | awk -F : '{ print $1 }' \
       | sort \
       | uniq

@@ -1,7 +1,7 @@
 FROM docker.io/nginx:1.17
 
 ENV NGINX_VERSION 1.17
-ENV METALS_VERSION 0.3.1
+ENV METALS_VERSION 0.3.2
 
 LABEL io.k8s.description="MeTaLS: a drop-in mTLS solution" \
   io.k8s.display-name="MeTaLS v${METALS_VERSION}" \
