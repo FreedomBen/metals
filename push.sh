@@ -23,11 +23,6 @@ main ()
     push_image "docker.io/freedomben/metals-${image}:${current_version}"
     push_image "docker.io/freedomben/metals-${image}:${short_version}"
   done
-
-  # Only push tags if the current commit matches the tag
-  #if git describe --exact-match --tags HEAD; then
-  #  echo Push
-  #fi
 }
 
 main "$@"
