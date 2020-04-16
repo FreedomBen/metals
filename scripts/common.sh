@@ -8,9 +8,15 @@ export color_cyan='\033[0;36m'
 export color_restore='\033[0m'
 
 export PODMAN=
-#PODMAN="sudo $(command -v podman) --authfile ~/.docker/config.json"
-PODMAN="sudo $(command -v podman)"
-PODMAN_AUTHFILE="$HOME/.docker/config.json"
+if command -v podman >/dev/null; then
+  export PODMAN="sudo $(command -v podman)"
+elif command -v docker >/dev/null; then
+  export PODMAN="$(command -v docker)"
+else
+  echo -e "${color_light_red}WARNING:  Could not find podman or docker.  Defaulting to /usr/bin/podman${color_restore}" >&2
+  export PODMAN="sudo /usr/bin/podman"
+fi
+export PODMAN_AUTHFILE="$HOME/.docker/config.json"
 
 export DEFAULT_DOCKERFILE='Dockerfile.nginx-116'
 export DEFAULT_RELEASE='116'
@@ -735,6 +741,7 @@ start_metals_test_env ()
 
 test_nginx ()
 {
+  echo -e "${color_light_green}Using $PODMAN to run containers${color_restore}"
   local dockerfile_suffix
   dockerfile_suffix="$(get_dockerfile_suffix "$1")"
   test_nginx_full_mtls "$1" "$dockerfile_suffix"
@@ -775,11 +782,6 @@ test_nginx_no_tls ()
 test_nginx_114 ()
 {
   test_nginx "114"
-}
-
-test_nginx_115 ()
-{
-  test_nginx "115"
 }
 
 test_nginx_116 ()

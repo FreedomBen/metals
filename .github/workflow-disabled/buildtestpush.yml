@@ -1,0 +1,148 @@
+name: Build -> Test -> Push
+
+on:
+  push:
+    branches: [ master, add-github-workflow ]
+  pull_request:
+    branches: [ master, add-github-workflow ]
+
+jobs:
+  build:
+    runs-on: [ubuntu-18.04]
+    steps:
+    - name: Install podman
+      run: |
+        . /etc/os-release
+        echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+        curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get -y install podman
+
+    # Checks-out repository under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v2
+
+    - name: Build images from Dockerfiles
+      run: ./build.sh
+    - name: Save nginx-114
+      run: sudo podman save --output nginx-114.tar docker.io/freedomben/metals-nginx-114
+    - name: Save nginx-116
+      run: sudo podman save --output nginx-116.tar docker.io/freedomben/metals-nginx-116
+    - name: Save nginx-117
+      run: sudo podman save --output nginx-117.tar docker.io/freedomben/metals-nginx-117
+    - name: Save tini
+      run: sudo podman save --output tini.tar docker.io/freedomben/metals-tini
+
+    - name: Upload nginx-114
+      uses: actions/upload-artifact@v1
+      with:
+        name: nginx-114.tar
+        path: nginx-114.tar
+    - name: Upload nginx-116
+      uses: actions/upload-artifact@v1
+      with:
+        name: nginx-116.tar
+        path: nginx-116.tar
+    - name: Upload nginx-117
+      uses: actions/upload-artifact@v1
+      with:
+        name: nginx-117.tar
+        path: nginx-117.tar
+    - name: Upload tini
+      uses: actions/upload-artifact@v1
+      with:
+        name: tini
+        path: tini.tar
+
+  test:
+    runs-on: [ubuntu-18.04]
+    needs: [build]
+    steps:
+    - name: Install podman
+      run: |
+        . /etc/os-release
+        echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+        curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get -y install podman
+
+    - uses: actions/checkout@v2
+
+    - uses: actions/download-artifact@v1
+      with:
+        name: nginx-114
+    - uses: actions/download-artifact@v1
+      with:
+        name: nginx-116
+    - uses: actions/download-artifact@v1
+      with:
+        name: nginx-117
+    - uses: actions/download-artifact@v1
+      with:
+        name: tini
+
+    - name: Restore nginx-114
+      run: sudo podman load --input nginx-114.tar
+    - name: Restore nginx-116
+      run: sudo podman load --input nginx-116.tar
+    - name: Restore nginx-117
+      run: sudo podman load --input nginx-117.tar
+    - name: Restore tini
+      run: sudo podman load --input tini.tar
+
+    - name: pwd
+      run: pwd
+    - name: ls all
+      run: ls -la
+    - name: ls above
+      run: ls -la ../
+    - name: ls above more
+      run: ls -la ../../
+    - name: ls scripts
+      run: ls -la scripts/
+    - name: Test nginx-114
+      run: ./scripts/test-nginx-114.sh
+    - name: Test nginx-116
+      run: ./scripts/test-nginx-116.sh
+    - name: Test nginx-117
+      run: ./scripts/test-nginx-117.sh
+    - name: Test nginx-tini
+      run: ./scripts/test-nginx-tini.sh
+
+#  push:
+#    runs-on: [ubuntu-18.04]
+#    needs: [build, test]
+#    steps:
+#    - name: Install podman
+#      run: |
+#        . /etc/os-release
+#        echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+#        curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+#        sudo apt-get update
+#        sudo apt-get -y install podman
+#
+#    - uses: actions/checkout@v2
+#
+#    - uses: actions/download-artifact@v1
+#      with:
+#        name: nginx-114
+#    - uses: actions/download-artifact@v1
+#      with:
+#        name: nginx-116
+#    - uses: actions/download-artifact@v1
+#      with:
+#        name: nginx-117
+#    - uses: actions/download-artifact@v1
+#      with:
+#        name: tini
+#
+#    - name: Restore nginx-114
+#      run: sudo podman load --input nginx-114.tar
+#    - name: Restore nginx-116
+#      run: sudo podman load --input nginx-116.tar
+#    - name: Restore nginx-117
+#      run: sudo podman load --input nginx-117.tar
+#    - name: Restore tini
+#      run: sudo podman load --input tini.tar
+#
+#    - name: Push to Quay and Docker Hub
+#      run: ./push.sh

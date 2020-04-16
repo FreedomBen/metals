@@ -1,27 +1,36 @@
-name: Docker Image CI
+name: Build and Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, add-github-workflow ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, add-github-workflow ]
 
 jobs:
-
-  build:
-
-    runs-on: [ubuntu-18.04]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build the container image
-      run: ./build.sh
-
   test:
     runs-on: [ubuntu-18.04]
-    
-    needs: [build]
-    
     steps:
-      - name: Test nginx-114
-        run: ./scripts/test-nginx-114.sh
+    - name: Install podman
+      run: |
+        . /etc/os-release
+        echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+        curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get -y install podman
+
+    - uses: actions/checkout@v2
+
+    - name: Test nginx-114
+      run: ./scripts/test-nginx-114.sh
+    - name: Test nginx-116
+      run: ./scripts/test-nginx-116.sh
+    - name: Test nginx-117
+      run: ./scripts/test-nginx-117.sh
+    - name: Test nginx-tini
+      run: ./scripts/test-nginx-tini.sh
+
+    - name: Upload test log
+      uses: actions/upload-artifact@v1
+      with:
+        name: test-results.log
+        path: test-results.log
