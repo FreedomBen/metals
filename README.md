@@ -536,19 +536,15 @@ This was my first preference but the image really isn't meant for this case.  It
 
 Docker loves tini and even integrated it into Docker v1.13 and later.  I have used and liked tini in the past.  The only reason I went with dumb-init is because tini does not support signal rewriting, which is important for nginx.
 
-### 5.  Why in the world did you use Bash?
-
-Classic software development story.  This project started out small, and Bash was the obvious choice.  As complexity steadily grew, at some point Bash was no longer the preferred language but schedules were tight, project managers were hounding, and porting was not an option.  Because there wasn't time in the schedule for automated tests, refactoring into a proper language is a risky (regression-wise) and time-consuming undertaking.
-
-### 6.  Why the name MeTaLS?
+### 5.  Why the name MeTaLS?
 
 The name MeTaLS is dual purpose.  It's what I hear when pronouncing the acronym MTLS, and it's also a hat tip to one of my favorite fiction book series of all time, [Mistborn](https://en.wikipedia.org/wiki/Mistborn).
 
-### 7.  Which pre-built images are available?
+### 6.  Which pre-built images are available?
 
 Section moved to documentation above.  See [Pre-Built Images](#pre-built-images)
 
-### 8.  Which version of nginx does this use?
+### 7.  Which version of nginx does this use?
 
 You can take your pick.  The default version currently is 1.16 as that is the latest stable version.  Version 1.14 is also available and has received a lot of testing.  1.17 is being worked on.
 
