@@ -415,11 +415,11 @@ valid_pem_file ()
   # Prefer $1 if it exists and has a valid certificate or key
   # $2 is the file to fall back to if $1 fails validation
   debug "Checking that file '$1' is valid"
-  if file_not_empty "$1" && file_not_null "$1" && file_is_pem "$1"; then
+  if file_not_empty "$1" && file_not_null "$1" && file_is_pem "$1" && ! file_is_encrypted_pem "$1"; then
     info "File '$1' appears to be valid'"
     echo "$1"
   else
-    warn "File '$1' is not valid PEM.  Falling back to default certificate"
+    warn "File '$1' is not valid/readable PEM.  Falling back to default certificate"
     echo "$2"
   fi
 }
@@ -587,12 +587,34 @@ check_is_pem ()
   fi
 }
 
+check_is_not_encrypted_pem ()
+{
+  debug "Checking that file '${1}' is not encrypted PEM"
+  if file_is_encrypted_pem "$1"; then
+    warn_or_die_on_ssl "File '${1}' is an encrypted PEM.  Nginx cannot use an encrypted file without prompting for the passphrase, which cannot be done remotely.  You need to decrypt the file and try again.  If you exported this file from a keystore tool, make sure it is being exported in plaintext (not encrypted)."
+  fi
+}
+
+file_is_encrypted_pem ()
+{
+  debug "Checking that file '$1' is not encrypted PEM"
+
+  if [ -n "$1" ] && [ -f "$1" ] && head -1 "$1" | grep 'ENCRYPTED' >/dev/null 2>&1; then
+    debug "File '$1' does not have ENCRYPTED in the PEM header, so is not encrypted"
+    return 0
+  else
+    warn "File '$1' appears to be encrypted PEM.  It contains 'ENCRYPTED' in the header.  You need to decrypt the file and try again."
+    return 1
+  fi
+}
+
 sanity_check_cert_files ()
 {
   for file in "$@"; do
     debug "Performing sanity check on cert file '$file'"
     check_not_null "$file"
     check_is_pem "$file"
+    check_is_not_encrypted_pem "$file"
   done
 }
 

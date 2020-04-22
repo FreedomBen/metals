@@ -58,6 +58,7 @@ fi
 export CERT_DIR="$CERTS/simple-root-client-server"
 export UNTRUSTED_CERT_DIR="$CERTS/valid-but-untrusted-root-intermediate"
 
+#export SERVER_KEY_FILE="$CERT_DIR/server-encrypted.key"
 export SERVER_KEY_FILE="$CERT_DIR/server.key"
 export SERVER_CERT_FILE="$CERT_DIR/server.crt"
 export CLIENT_KEY_FILE="$CERT_DIR/server.key"
