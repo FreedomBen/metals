@@ -4,7 +4,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-407
 # update FROM to be from 8:1
 
 ENV NGINX_VERSION 1.14
-ENV METALS_VERSION 0.4.0
+ENV METALS_VERSION 0.4.1
 
 LABEL io.k8s.description="MeTaLS: a drop-in mTLS solution" \
   io.k8s.display-name="MeTaLS v${METALS_VERSION}" \
