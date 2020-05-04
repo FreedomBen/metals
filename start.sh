@@ -441,9 +441,9 @@ nginx_location_block ()
   cat <<- EOF
             # It is preferrable to use 127.0.0.1 rather than
             # localhost because it avoids a lookup with the resolver
-            set \$upstream ${METALS_PROXY_PASS_PROTOCOL:-http}://${METALS_PROXY_PASS_HOST:-127.0.0.1}:${METALS_FORWARD_PORT:-8080};
-
-            proxy_pass        \$upstream;
+            proxy_pass         ${METALS_PROXY_PASS_PROTOCOL:-http}://backend;
+            proxy_http_version 1.1;                 # required for keepalive
+            proxy_set_header   Connection       ""; # Remove close header for keepalive
             proxy_set_header  X-Real-IP        \$remote_addr;
             proxy_set_header  X-Forwarded-For  \$proxy_add_x_forwarded_for;
             proxy_set_header  X-Client-Dn      \$ssl_client_s_dn;
@@ -516,16 +516,14 @@ generate_nginx_config_no_health_checks ()
         resolver $(awk '/^nameserver/{print $2}' /etc/resolv.conf | tr '\n' ' ') valid=30s;
 
         location / {
-            # It is preferrable to use 127.0.0.1 rather than
-            # localhost because it avoids a lookup with the resolver
-            set \$upstream ${METALS_PROXY_PASS_PROTOCOL:-http}://${METALS_PROXY_PASS_HOST:-127.0.0.1}:${METALS_FORWARD_PORT:-8080};
-
-            proxy_pass        \$upstream;
-            proxy_set_header  X-Real-IP        \$remote_addr;
-            proxy_set_header  X-Forwarded-For  \$proxy_add_x_forwarded_for;
-            proxy_set_header  X-Client-Dn      \$ssl_client_s_dn;
-            proxy_set_header  Host             \$http_host;
-            proxy_redirect    off;
+            proxy_pass         ${METALS_PROXY_PASS_PROTOCOL:-http}://backend;
+            proxy_http_version 1.1;                 # required for keepalive
+            proxy_set_header   Connection       ""; # Remove close header for keepalive
+            proxy_set_header   X-Real-IP        \$remote_addr;
+            proxy_set_header   X-Forwarded-For  \$proxy_add_x_forwarded_for;
+            proxy_set_header   X-Client-Dn      \$ssl_client_s_dn;
+            proxy_set_header   Host             \$http_host;
+            proxy_redirect     off;
         }
     }
 EOF
@@ -547,20 +545,30 @@ generate_nginx_config ()
   local nginx_config_file
   nginx_config_file="$(nginx_config_file_location)/mtls.conf"
   cat <<- EOF > "$nginx_config_file"
+    # Upstream definition
+    upstream backend {
+        # It is preferrable to use 127.0.0.1 rather than
+        # localhost because it avoids a lookup with the resolver
+        server              ${METALS_PROXY_PASS_HOST:-127.0.0.1}:${METALS_FORWARD_PORT:-8080} weight=1;
+        keepalive           ${METALS_UPSTREAM_KEEPALIVE_CONNECTIONS:-32};
+        # keepalive_timeout introduced in nginx 1.15
+        # keepalive_timeout ${METALS_UPSTREAM_KEEPALIVE_TIMEOUT:-60s};
+    }
+
     # Health check server (no client auth required)
     server {
-      $(nginx_server_block "$1" "$2" "$3" "$4" "off" "${METALS_SKIP_CLIENT_AUTH_LISTEN_PORT:-9443}")
+        $(nginx_server_block "$1" "$2" "$3" "$4" "off" "${METALS_SKIP_CLIENT_AUTH_LISTEN_PORT:-9443}")
 
-      $(nginx_health_check_location_blocks)
+        $(nginx_health_check_location_blocks)
     }
 
     # Main block for proxy (requires client auth)
     server {
-      $(nginx_server_block "$1" "$2" "$3" "$4" "${METALS_TLS_VERIFY_CLIENT:-'on'}" "${METALS_LISTEN_PORT:-8443}")
+        $(nginx_server_block "$1" "$2" "$3" "$4" "${METALS_TLS_VERIFY_CLIENT:-'on'}" "${METALS_LISTEN_PORT:-8443}")
 
-      location / {
-        $(nginx_location_block)
-      }
+        location / {
+            $(nginx_location_block)
+        }
     }
 EOF
   info "Wrote nginx config file to '${nginx_config_file}'.  Start file:"
