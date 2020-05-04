@@ -544,6 +544,17 @@ EOF
   info "End nginx config file"
 }
 
+keepalive_timeout ()
+{
+  # keepalive_timeout was introduced in nginx 1.15
+  # so don't use it on nginx 1.14
+  if [ "${NGINX_VERSION}" = '1.14' ]; then
+    echo "# keepalive_timeout not available until nginx 1.15"
+  else
+    echo "keepalive_timeout ${METALS_UPSTREAM_KEEPALIVE_TIMEOUT:-60s};"
+  fi
+}
+
 generate_nginx_config ()
 {
   # $1 thru $4 are cert files, $5 is verify client
@@ -560,8 +571,7 @@ generate_nginx_config ()
         # localhost because it avoids a lookup with the resolver
         server              ${METALS_PROXY_PASS_HOST:-127.0.0.1}:${METALS_FORWARD_PORT:-8080} weight=1;
         keepalive           ${METALS_UPSTREAM_KEEPALIVE_CONNECTIONS:-32};
-        # keepalive_timeout introduced in nginx 1.15
-        # keepalive_timeout ${METALS_UPSTREAM_KEEPALIVE_TIMEOUT:-60s};
+        $(keepalive_timeout)
     }
 
     # Health check server (no client auth required)

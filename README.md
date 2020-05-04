@@ -162,6 +162,16 @@ If you want to customize the behavior of MeTaLS, or if you need finer grained co
 | `METALS_TLS_VERIFY_CLIENT`   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
 | `METALS_SLEEP_ON_FATAL`      | No       | `""`               | Setting this to an integer value will cause the container to sleep for this many seconds after encountering a fatal error.  This is useful for keeping a pod alive while you inspect logs to determine what went wrong |
 
+#### Keepalive tuning
+
+MeTaLS will use keepalive to hold open connections to your backend.  This greatly improves performance and reduces response times.  If you have an application that needs keepalive tuning, you can do that with these variables.
+
+| Variable                                | Required | Default Value      | Description |
+|-----------------------------------------|----------|--------------------|-------------|
+| `METALS_UPSTREAM_KEEPALIVE_CONNECTIONS` | No       | `32`               | If you want to use a different number of open keepalive connections, specify that value here |
+| `METALS_UPSTREAM_KEEPALIVE_TIMEOUT`     | No       | `60s`              | If you want to use a different keepalive value between MeTaLS and the upstream, you can specify that value here |
+
+
 #### Skipping Client Auth for certain paths (such as Health Checks)
 
 If you need to allow certain paths through without client authentication, you can use these variables to provide a whitelist:
