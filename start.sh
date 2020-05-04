@@ -452,16 +452,25 @@ nginx_location_block ()
 EOF
 }
 
+listen_ssl ()
+{
+  if [ "$MTLS_SSL" = 'off' ]; then
+    echo ''
+  else
+    echo 'ssl'
+  fi
+}
+
 nginx_server_block ()
 {
   # $5 = verify_client
   # $6 = listen port
   cat <<- EOF
-        listen       ${6:-"8443"} default_server;
-        listen       [::]:${6:-"8443"} default_server;
+        listen       ${6:-"8443"} default_server $(listen_ssl);
+        listen       [::]:${6:-"8443"} default_server $(listen_ssl);
         server_name  ${METALS_SERVER_NAME:-"_"};
         root         /usr/share/nginx;
-        ssl                     ${METALS_TLS_ENABLED:-"on"};
+
         ssl_certificate_key     $(valid_pem_file "$1" "/mtls/default-certificates/server.key");
         ssl_certificate         $(valid_pem_file "$2" "/mtls/default-certificates/server.crt");
         ssl_trusted_certificate $(valid_pem_file "$3" "/mtls/default-certificates/rootca.crt");
