@@ -37,7 +37,7 @@ debug_unsafe ()
 
 warn ()
 {
-  echo "[WARN]: start.sh $1" >&2
+  echo "[WARN]: start.sh: $1" >&2
 }
 
 info ()
@@ -822,6 +822,18 @@ retrieve_vault_token ()
   fi
 }
 
+setup_log_rotate ()
+{
+  # Kick off our poor mans log rotater until the permission
+  # issue with nginx writing directly to stdout is fixed
+  if [ "$METALS_LOG_ROTATION_ENABLED" != 'off' ]; then
+    debug 'Log rotation is enabled.  Kicking off rotation script'
+    /mtls/log-rotate.sh &
+  else
+    info 'Log rotation is disabled.  Logs will not be rotated'
+  fi
+}
+
 main ()
 {
   check_trace
@@ -887,6 +899,7 @@ main ()
   tail -f /var/log/nginx/error.log &
   tail -f /var/log/nginx/access.log &
 
+  setup_log_rotate
   start_nginx
 }
 

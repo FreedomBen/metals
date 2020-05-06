@@ -161,6 +161,8 @@ If you want to customize the behavior of MeTaLS, or if you need finer grained co
 | `METALS_TLS_ENABLED`                 | No       | `on`               | **WARNING: If you set this to `"off"` TLS will be completely disabled, meaning all traffic is plain text!**<br>Defaults to `"on"`.  Disabling SSL can be very useful for debugging, but don't forget to re-enable it before deploying |
 | `METALS_TLS_VERIFY_CLIENT`   | No       | `on`               | **WARNING: If you set this to `"off"` the client will not be verified, meaning this is just regular TLS and not mTLS!**.<br>Defaults to `"on"`.  Disabling client authentication can be very useful for debugging, but don't forget to re-enable it unless you only need TLS |
 | `METALS_SLEEP_ON_FATAL`      | No       | `""`               | Setting this to an integer value will cause the container to sleep for this many seconds after encountering a fatal error.  This is useful for keeping a pod alive while you inspect logs to determine what went wrong |
+| `METALS_LOG_ROTATION_ENABLED`| No       | `"on"`             | This allows disabling overriding the number of hours between log rotations. If you have plenty of disk and value accurate logs, set this to "off" to disable log rotation (logs will still be reset each time the container is restarted, such as deploys) |
+| `METALS_LOG_ROTATION_HOURS`  | No       | `"24"`             | This allows overriding the number of hours between log rotations. If you have plenty of disk and value accurate logs, set this really high or turn off log rotation altogether with `METALS_LOG_ROTATION_ENABLED=off` |
 
 #### Keepalive tuning
 

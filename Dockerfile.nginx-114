@@ -42,7 +42,7 @@ RUN chmod g+rwx /etc /etc/nginx /etc/nginx/conf.d \
 WORKDIR /mtls
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY default-certificates/* /mtls/default-certificates/
-COPY start.sh /mtls
+COPY start.sh log-rotate.sh /mtls
 
 EXPOSE 8443
 
