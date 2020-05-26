@@ -218,6 +218,8 @@ start_metals ()
     --env "METALS_TLS_VERIFY_CLIENT=${3:-on}" \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
+    --env METALS_LOG_ROTATION_ENABLED='on' \
+    --env METALS_LOG_ROTATION_HOURS='1' \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
@@ -261,6 +263,8 @@ start_metals_vault ()
     --env "METALS_TLS_VERIFY_CLIENT=${3:-on}" \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
+    --env METALS_LOG_ROTATION_ENABLED='on' \
+    --env METALS_LOG_ROTATION_HOURS='1' \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
@@ -306,6 +310,8 @@ start_metals_vault_diff_paths ()
     --env METALS_TLS_VERIFY_CLIENT=on \
     --env METALS_DEBUG=true \
     --env METALS_DEBUG_UNSAFE=false \
+    --env METALS_LOG_ROTATION_ENABLED='on' \
+    --env METALS_LOG_ROTATION_HOURS='1' \
     \
     --env METALS_PROXY_PASS_PROTOCOL=http \
     --env METALS_PROXY_PASS_HOST=127.0.0.1 \
