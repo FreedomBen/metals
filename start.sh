@@ -824,13 +824,23 @@ retrieve_vault_token ()
 
 setup_log_rotate ()
 {
-  # Kick off our poor mans log rotater until the permission
+  # Kick off our poor man's log rotater until the permission
   # issue with nginx writing directly to stdout is fixed
   if [ "$METALS_LOG_ROTATION_ENABLED" != 'off' ]; then
     debug 'Log rotation is enabled.  Kicking off rotation script'
     /mtls/log-rotate.sh &
   else
     info 'Log rotation is disabled.  Logs will not be rotated'
+  fi
+}
+
+check_listen_if ()
+{
+  if [ "$METALS_BIND_CHECK_DISABLED" != 'off' ]; then
+    debug 'Interface check enabled.  Kicking off interface check script'
+    /mtls/check-listen-if.sh &
+  else
+    info 'Interface check is disabled.  Will not check to see if application is listening on the external interface'
   fi
 }
 
@@ -900,6 +910,7 @@ main ()
   tail -f /var/log/nginx/access.log &
 
   setup_log_rotate
+  check_listen_if
   start_nginx
 }
 
