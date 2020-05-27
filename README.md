@@ -1,6 +1,6 @@
 # MeTaLS (mTLS)
 
-[![Build and Test](https://github.com/FreedomBen/metals/workflows/Build%20and%20Test/badge.svg)](https://github.com/FreedomBen/metals/actions?query=workflow%3A%22Build+and+Test%22) [![Docker Repository on Quay](https://quay.io/repository/freedomben/metals/status)](https://quay.io/repository/freedomben/metals)  ![GitHub](https://img.shields.io/badge/license-Apache--2.0-green)  ![Version](https://img.shields.io/badge/Version-v0.4.1-green)
+[![Build and Test](https://github.com/FreedomBen/metals/workflows/Build%20and%20Test/badge.svg)](https://github.com/FreedomBen/metals/actions?query=workflow%3A%22Build+and+Test%22) [![Docker Repository on Quay](https://quay.io/repository/freedomben/metals/status)](https://quay.io/repository/freedomben/metals)  ![GitHub](https://img.shields.io/badge/license-Apache--2.0-green)  ![Version](https://img.shields.io/badge/Version-v0.4.2-green)
 
 Link to source repository:  [https://github.com/FreedomBen/metals](https://github.com/FreedomBen/metals)
 
